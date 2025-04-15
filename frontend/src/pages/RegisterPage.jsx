@@ -18,6 +18,7 @@ export default function RegisterPage() {
   };
 
   const handleSubmit = async (e) => {
+  
     e.preventDefault();
     try {
       await registerUser(formData);

@@ -1,0 +1,44 @@
+📦 frontend
+├── 📂 public/                # Assets públicos (index.html, favicon, etc.)
+├── 📂 node_modules/          # Dependencias
+└── 📂 src/
+    ├── 📂 api/
+    │   └── auth.api.js       # Llamadas a la API de autenticación (fetchUserRole)
+    ├── 📂 assets/
+    │   └── react.svg         # Imágenes/iconos
+    ├── 📂 components/
+    │   ├── 📂 ui/
+    │   │   ├── Button.jsx
+    │   │   ├── EnrollmentForm.jsx
+    │   │   ├── Input.jsx
+    │   │   └── SportCard.jsx
+    │   ├── 📂 admin/         # (Vacía por ahora)
+    │   ├── AuthForm.jsx
+    │   └── ProtectedRoute.jsx
+    ├─── 📂 constants/          # Nueva carpeta
+    │       └── roles.js          # Define ROLES = { ADMIN: 'admin', USER: 
+    ├── 📂 contexts/
+    │   ├── AuthContext.jsx   # Contexto de autenticación
+    │   └── AuthProvider.jsx  # Proveedor del contexto
+    ├── 📂 hooks/
+    │   └── useUserRole.js    # Hook personalizado para roles
+    ├── 📂 lib/
+    │   └── supabaseClient.js # Configuración de Supabase
+    ├── 📂 pages/
+    │   ├── AdminPage.jsx
+    │   ├── DashboardPage.jsx
+    │   ├── LoginPage.jsx
+    │   └── RegisterPage.jsx
+    ├── 📂 styles/
+    │   ├── admin.css
+    │   ├── App.css
+    │   ├── index.css
+    │   ├── Login.css
+    │   ├── main.css
+    │   ├── SportCard.css
+    │   └── user-dashboard.css
+    ├── 📂 utils/             # (Vacía)
+    │   └── auth.js           # Contiene helpers de autenticación
+    ├── App.jsx               # Componente principal
+    ├── main.jsx              # Punto de entrada
+    └── .env.local            # Variables de entorno

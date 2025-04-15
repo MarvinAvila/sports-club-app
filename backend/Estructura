@@ -1,0 +1,21 @@
+📦 backend
+├── 📂 config
+│   └── supabaseClient.js       # Configuración de cliente Supabase
+├── 📂 controllers
+│   └── auth.controller.js      # Lógica de los endpoints de autenticación
+├── 📂 middlewares
+│   └── auth.middleware.js      # Middlewares de autenticación
+├── 📂 node_modules             # Dependencias de Node.js
+├── 📂 repositories             # (Vacía)
+├── 📂 routes
+│   └── auth.routes.js          # Rutas de autenticación
+├── 📂 services
+│   └── supabaseService.js      # Lógica de servicio Supabase
+├── 📂 models                   # (Vacía)
+├── 📂 types                    # (Vacía)
+├── 📂 database                 # (Vacía)
+├── 🗒️ .env                    # Variables de entorno
+├── 🗒️ app.js                  # Configuración principal de la app
+├── 🗒️ package.json            # Dependencias y scripts
+├── 🗒️ package-lock.json       # Versiones exactas de dependencias
+└── 🗒️ server.js               # Punto de entrada del servidor
