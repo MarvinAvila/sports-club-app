@@ -7,24 +7,27 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage';
 import { ProtectedRoute } from './components/ProtectedRoute';
-import { supabase } from '@/lib/supabaseClient';
-import { useEffect } from 'react';
+// import { supabase } from '@/lib/supabaseClient';
+//import { useEffect } from 'react';
 // Componente para redirigir usuarios autenticados
 function RedirectIfAuthenticated({ children }) {
-  const { user } = useContext(AuthContext);
-  return user ? <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} /> : children;
+  const { user, role, loading } = useContext(AuthContext);
+
+  if (loading || (user && role === null)) {
+    return <div>Cargando...</div>; // Espera mientras carga el rol
+  }
+
+  if (user) {
+    return <Navigate to={role === 'admin' ? '/admin' : '/dashboard'} replace />;
+  }
+
+  return children;
 }
 
-function App({ initialSession }) {
-  useEffect(() => {
-    // Sincroniza sesión con tu AuthContext
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // Aquí deberías actualizar tu AuthContext
-      console.log('Cambio en autenticación:', event, session);
-    });
 
-    return () => subscription.unsubscribe();
-  }, []);
+
+function App({ initialSession }) {
+
   console.log("[Debug] App renderizado");
   return (
     <AuthProvider initialSession={initialSession}>

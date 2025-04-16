@@ -5,7 +5,8 @@ import { fetchUserRole } from '@/api/auth.api'; // Añade esta importación
 
 export function AuthProvider({ children, initialSession }) {
   const [user, setUser] = useState(initialSession?.user || null);
-  const [role, setRole] = useState('user'); 
+  const [role, setRole] = useState(null); 
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchRole = async (user) => {
@@ -13,6 +14,7 @@ export function AuthProvider({ children, initialSession }) {
         const userRole = await fetchUserRole(); // Usa tu hook o API
         setRole(userRole);
       }
+      setLoading(false);
     };
   
     fetchRole(initialSession?.user);
@@ -23,13 +25,14 @@ export function AuthProvider({ children, initialSession }) {
     if (error) throw error;
     setUser(data.user);
     const userRole = await fetchUserRole(); // Actualiza el rol después de login
+    console.log("[DEBUG] Usuario con rol:", userRole); 
     setRole(userRole);
   };
 
   const logout = async () => {
     await supabase.auth.signOut(); 
     setUser(null);
-    setRole('user'); // Restablece a rol por defecto
+    setRole(null); // Restablece a rol por defecto
     localStorage.clear(); // Limpia almacenamiento local si usas persistencia
   };
 
@@ -40,7 +43,8 @@ export function AuthProvider({ children, initialSession }) {
       role,
       login,
       logout,
-      isAuthenticated: !!user 
+      isAuthenticated: !!user,
+      loading, // <-- también lo expones aquí
     }}>
       {children}
     </AuthContext.Provider>

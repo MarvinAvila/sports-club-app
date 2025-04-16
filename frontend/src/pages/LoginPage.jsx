@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom'; 
-import { fetchUserRole } from '@/api/auth.api';
+
 import { AuthContext } from '../contexts/AuthContext';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -11,14 +10,12 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { login } = useAuth();
-  const navigate = useNavigate(); // Correctamente definido
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await login(email, password); // login ya maneja la sesión y el rol
-      const role = await fetchUserRole();
-      navigate(role === 'admin' ? '/admin' : role === 'tutor' ? '/tutor' : '/dashboard');
     } catch (err) {
       setError(err.message);
     }

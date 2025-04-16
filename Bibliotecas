@@ -1,0 +1,5 @@
+npm install xlsx
+
+npm install react-calendar
+
+npm install recharts

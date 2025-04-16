@@ -1,27 +1,38 @@
-import { useAuth } from '@/contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import '@/styles/admin.css'; // Importa los estilos específicos de admin
+import React from 'react';
+import AdminLayout from '../components/admin/AdminLayout';
+import StudentFilters from '../components/admin/StudentFilters';
+import StudentActions from '../components/admin/StudentActions';
+import StudentTable from '../components/admin/StudentTable';
 
-export default function AdminPage() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
+const AdminPage = () => {
   return (
-    <div className="admin-container">
-      <header className="admin-header">
-        <h1>Panel de Administrador</h1>
-        <div className="header-actions">
-          <button onClick={handleLogout} className="logout-button">
-            Cerrar Sesión
-          </button>
-        </div>
-      </header>
-      <h1>Bienvenido, {user?.name || 'Admin'}</h1>
-    </div>
+    <AdminLayout>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-semibold text-white">Gestión de Alumnos</h1>
+        <button
+          className="bg-red-500 hover:bg-red-600 text-white font-medium py-2 px-4 rounded-lg shadow transition-all"
+          onClick={() => {
+            // Aquí va tu lógica de cerrar sesión
+            console.log('Cerrar sesión');
+          }}
+        >
+          Cerrar Sesión
+        </button>
+      </div>
+
+      <div className="bg-gray-800 p-4 rounded-2xl shadow mb-4">
+        <StudentFilters />
+      </div>
+
+      <div className="bg-gray-800 p-4 rounded-2xl shadow mb-4">
+        <StudentActions />
+      </div>
+
+      <div className="bg-gray-800 p-4 rounded-2xl shadow">
+        <StudentTable />
+      </div>
+    </AdminLayout>
   );
-}
+};
+
+export default AdminPage;
