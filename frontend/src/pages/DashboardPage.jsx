@@ -1,4 +1,4 @@
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth.js';
 import { useNavigate } from 'react-router-dom';
 import '@/styles/user-dashboard.css'; // Asegúrate de importar los estilos
 

@@ -1,26 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useContext  } from 'react';
+import { authApi } from '../api/auth.api.js'; 
+import { AuthContext } from '../contexts/AuthContextInstance';
+import { useNavigate } from 'react-router-dom';
 
-import { AuthContext } from '../contexts/AuthContext';
-import { useAuth } from '../contexts/AuthContext';
 
 import "../styles/Login.css";
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login } = useContext(AuthContext); // Usar el login del contexto
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+
     try {
-      await login(email, password); // login ya maneja la sesión y el rol
+      const { token, role } = await authApi.login(email, password); // Llama a la API
+      login(token, role); // Actualiza el contexto con el token y el rol
+
+      // Redirige según el rol del usuario
+      if (role === 'admin') {
+        navigate('/admin');  // Redirige al AdminPage
+      } else if (role === 'tutor') {
+        navigate('/dashboard'); 
+      }else {
+        navigate('/dashboard');  // Redirige al home o a una página por defecto
+      }
+
+
     } catch (err) {
-      setError(err.message);
+      setError('Credenciales incorrectas. Intenta de nuevo.');
+      err.response && setError(err.response.data.error); // Manejo de errores
     }
   };
-  
 
   return (
     <div className="login-background">
@@ -31,7 +46,7 @@ const LoginPage = () => {
           
           {error && <div className="error-message">{error}</div>}
           
-          <form onSubmit={handleSubmit} className="login-form">
+          <form onSubmit={handleLogin} className="login-form">
             <div className="form-group">
               <input
                 type="email"

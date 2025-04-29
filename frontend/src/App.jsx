@@ -1,64 +1,38 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthProvider';
-import { useContext } from 'react';
-import { AuthContext } from './contexts/AuthContext';
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import DashboardPage from './pages/DashboardPage';
 import AdminPage from './pages/AdminPage';
-import { ProtectedRoute } from './components/ProtectedRoute';
-// import { supabase } from '@/lib/supabaseClient';
-//import { useEffect } from 'react';
-// Componente para redirigir usuarios autenticados
-function RedirectIfAuthenticated({ children }) {
-  const { user, role, loading } = useContext(AuthContext);
+import DashboardPage from './pages/DashboardPage';
+import ProtectedRoute from './components/ProtectedRoute';
 
-  if (loading || (user && role === null)) {
-    return <div>Cargando...</div>; // Espera mientras carga el rol
-  }
-
-  if (user) {
-    return <Navigate to={role === 'admin' ? '/admin' : '/dashboard'} replace />;
-  }
-
-  return children;
-}
-
-
-
-function App({ initialSession }) {
-
-  console.log("[Debug] App renderizado");
+const App = () => {
   return (
-    <AuthProvider initialSession={initialSession}>
-      <Router>
+    <Router>
+      <AuthProvider>
         <Routes>
-          <Route path="/login" element={
-            <RedirectIfAuthenticated>
-              <LoginPage />
-            </RedirectIfAuthenticated>
-          } />
-          <Route path="/register" element={
-            <RedirectIfAuthenticated>
-              <RegisterPage />
-            </RedirectIfAuthenticated>
-          } />
-          <Route path="/dashboard" element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/admin" element={
-            <ProtectedRoute adminOnly>
-              <AdminPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
-}
+};
 
 export default App;

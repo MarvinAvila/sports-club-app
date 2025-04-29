@@ -6,8 +6,10 @@ export const useUserRole = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('[useUserRole] montado');
     const getRole = async () => {
       const userRole = await fetchUserRole();
+      console.log('[useUserRole] rol obtenido:', userRole);
       setRole(userRole);
       setLoading(false);
     };

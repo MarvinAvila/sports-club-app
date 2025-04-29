@@ -1,20 +1,22 @@
 import React from 'react';
-import '../../styles/admin.css';
 
 const AdminLayout = ({ children }) => {
   return (
-    <div className="admin-layout">
-      <aside className="sidebar">
-        <h2>Panel Admin</h2>
+    <div className="min-h-screen flex bg-[#1e1e2f] text-white">
+      {/* Sidebar */}
+      <aside className="w-64 bg-[#29293d] p-6 shadow-lg">
+        <h2 className="text-xl font-bold mb-6">Panel Admin</h2>
         <nav>
-          <ul>
-            <li>Alumnos</li>
-            <li>Calendario</li>
-            <li>Reportes</li>
+          <ul className="space-y-4">
+            <li className="hover:text-red-400 cursor-pointer">Alumnos</li>
+            <li className="hover:text-red-400 cursor-pointer">Calendario</li>
+            <li className="hover:text-red-400 cursor-pointer">Reportes</li>
           </ul>
         </nav>
       </aside>
-      <main className="content">{children}</main>
+
+      {/* Main Content */}
+      <main className="flex-1 p-8 overflow-y-auto">{children}</main>
     </div>
   );
 };

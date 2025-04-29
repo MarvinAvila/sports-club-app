@@ -11,7 +11,14 @@
 │   └── auth.routes.js          # Rutas de autenticación
 ├── 📂 services
 │   └── supabaseService.js      # Lógica de servicio Supabase
-├── 📂 models                   # (Vacía)
+├── 📂 models
+│   ├── AlumnoModel.js           # Modelo para la tabla "alumnos"
+│   ├── DeporteModel.js          # Modelo para la tabla "deportes"
+│   ├── InscripcionModel.js      # Modelo para la tabla "inscripciones"
+│   ├── NotificacionModel.js     # Modelo para la tabla "notificaciones"
+│   ├── PagoModel.js             # Modelo para la tabla "pagos"
+│   ├── TutorAlumnoModel.js      # Modelo para la tabla "tutores_alumnos"
+│   └── UsuarioModel.js          # Modelo para la tabla "usuarios"
 ├── 📂 types                    # (Vacía)
 ├── 📂 database                 # (Vacía)
 ├── 🗒️ .env                    # Variables de entorno

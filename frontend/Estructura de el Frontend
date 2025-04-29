@@ -3,7 +3,8 @@
 ├── 📂 node_modules/          # Dependencias
 └── 📂 src/
     ├── 📂 api/
-    │   └── auth.api.js       # Llamadas a la API de autenticación (fetchUserRole)
+    │   ├── auth.api.js       # Llamadas a la API de autenticación (fetchUserRole)
+    │   └── students.api.js
     ├── 📂 assets/
     │   └── react.svg         # Imágenes/iconos
     ├── 📂 components/
@@ -12,16 +13,28 @@
     │   │   ├── EnrollmentForm.jsx
     │   │   ├── Input.jsx
     │   │   └── SportCard.jsx
-    │   ├── 📂 admin/         # (Vacía por ahora)
+    │   ├── 📂 admin/         
+    │   │   ├── AdminLayout.jsx
+    │   │   ├── StudentActions.jsx
+    │   │   ├── StudentFilters.jsx
+    │   │   ├── StudentTable.jsx
+    │   │   ├── MessagingCenter.jsx
+    │   │   ├── FinancialReposrts.jsx
+    │   │   ├── DocumentUploader.jsx
+    │   │   ├── ChangeHistory.jsx
+    │   │   └── AdminCalendar.jsx
     │   ├── AuthForm.jsx
     │   └── ProtectedRoute.jsx
     ├─── 📂 constants/          # Nueva carpeta
-    │       └── roles.js          # Define ROLES = { ADMIN: 'admin', USER: 
+    │       └── roles.js          # Define ROLES 
     ├── 📂 contexts/
+    │   ├── AuthContextInstance.js     # Contexto de autenticación
     │   ├── AuthContext.jsx   # Contexto de autenticación
     │   └── AuthProvider.jsx  # Proveedor del contexto
     ├── 📂 hooks/
-    │   └── useUserRole.js    # Hook personalizado para roles
+    │   ├── useAuth.js         # Hook personalizado para autenticación
+    │   ├── useUserRole.js    # Hook personalizado para roles
+    │   └── useStudents.js
     ├── 📂 lib/
     │   └── supabaseClient.js # Configuración de Supabase
     ├── 📂 pages/
@@ -38,7 +51,8 @@
     │   ├── SportCard.css
     │   └── user-dashboard.css
     ├── 📂 utils/             # (Vacía)
-    │   └── auth.js           # Contiene helpers de autenticación
+    │   ├── auth.js           # Contiene helpers de autenticación
+    │   └── export.js
     ├── App.jsx               # Componente principal
     ├── main.jsx              # Punto de entrada
     └── .env.local            # Variables de entorno

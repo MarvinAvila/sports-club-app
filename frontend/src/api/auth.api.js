@@ -1,48 +1,62 @@
-import { supabase } from '@/lib/supabaseClient'; 
+const BASE_URL = import.meta.env.VITE_BACKEND_URL; // Así accedes a la variable del .env.local
 
-
-export const registerUser = async (userData) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (userData.password.length < 6) {
-        reject(new Error('Password must be at least 6 characters'));
-        return;
-      }
-
-      resolve({
-        user: {
-          ...userData,
-          role: 'user' // Todos los registros son usuarios normales
-        },
-        token: 'fake-jwt-token'
-      });
-    }, 1000);
-  });
-};
-
-export const fetchUserRole = async () => {
+const login = async (email, password) => {
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError || !session) {
-      throw new Error('No hay sesión activa');
-    }
-
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/user-role`, {
+    const response = await fetch(`${BASE_URL}/login`, {
+      method: 'POST',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`
-      }
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
     });
 
     if (!response.ok) {
-      throw new Error('Error al obtener el rol');
+      throw new Error('Credenciales incorrectas');
     }
 
-    const { role } = await response.json();
-    console.log("[DEBUG] Rol del usuario:", role); // Debugging
-    return role; // Valor por defecto
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
+    return {
+      token: data.token,
+      role: data.role,
+    };
   } catch (error) {
-    console.error('Error fetching user role:', error.message);
-    return 'user'; // Rol por defecto en caso de error
+    throw new Error(error.message);
   }
+};
+
+export const fetchUserRole = async (token) => {
+  try {
+    const response = await fetch(`${BASE_URL}/role`, { // <-- Aquí también
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error('No se pudo obtener el rol del usuario');
+    }
+
+    const data = await response.json();
+    
+    if (data.error) {
+      throw new Error(data.error);
+    }
+
+    return data.role;
+
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+
+export const authApi = {
+  login,
+  fetchUserRole, // Exporta la función para obtener el rol del usuario
 };

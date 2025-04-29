@@ -1,14 +1,15 @@
-import { useContext } from 'react';
-import { Navigate } from 'react-router-dom';
-import { AuthContext } from '../contexts/AuthContext';
+import React, { useContext } from 'react';
+import { AuthContext } from '../contexts/AuthContextInstance';
+import { Navigate  } from 'react-router-dom';
 
-export const ProtectedRoute = ({ children, adminOnly = false }) => {
-  const { user, role, loading } = useContext(AuthContext);
+const ProtectedRoute = ({ children }) => {
+  const { token } = useContext(AuthContext); // Obtener el token del contexto
 
-  if (loading) return <div>Cargando...</div>;
+  if (!token) {
+    return <Navigate  to="/login" />; // Si no está autenticado, redirige al login
+  }
 
-  if (!user) return <Navigate to="/login" replace />;
-  if (adminOnly && role !== 'admin') return <Navigate to="/dashboard" replace />;
-
-  return children;
+  return children; // Si está autenticado, renderiza los hijos
 };
+
+export default ProtectedRoute;
