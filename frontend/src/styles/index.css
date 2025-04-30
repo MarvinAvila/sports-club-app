@@ -1,4 +1,9 @@
-:root {
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
@@ -11,7 +16,7 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
+} */
 
 a {
   font-weight: 500;
@@ -54,10 +59,10 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
+/* @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
-    background-color: #ffffff;
+    background-color:rgb(4, 58, 44);
   }
   a:hover {
     color: #747bff;
@@ -65,4 +70,62 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+} */
+@layer components {
+  .card {
+    @apply bg-white rounded-xl shadow-md overflow-hidden;
+  }
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors;
+  }
+  .btn-primary {
+    @apply bg-indigo-600 text-white hover:bg-indigo-700;
+  }
+  .btn-success {
+    @apply bg-green-600 text-white hover:bg-green-700;
+  }
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+  .status-badge {
+    @apply px-2 py-1 rounded-full text-xs font-medium;
+  }
+  .status-active {
+    @apply bg-green-100 text-green-800;
+  }
+  .status-pending {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+  .status-inactive {
+    @apply bg-red-100 text-red-800;
+  }
+}
+
+/* Estilos personalizados para react-calendar */
+.react-calendar {
+  @apply bg-gray-700 text-gray-100 border-gray-600;
+}
+
+.react-calendar__navigation button {
+  @apply text-white bg-gray-700 hover:bg-gray-600;
+}
+
+.react-calendar__month-view__weekdays {
+  @apply text-gray-300;
+}
+
+.react-calendar__tile {
+  @apply text-white hover:bg-gray-600;
+}
+
+.react-calendar__tile--now {
+  @apply bg-purple-600 text-white;
+}
+
+.react-calendar__tile--active {
+  @apply bg-purple-500 text-white;
+}
+
+.react-calendar__tile:disabled {
+  @apply text-gray-500;
 }

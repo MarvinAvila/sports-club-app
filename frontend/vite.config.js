@@ -1,5 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from 'tailwindcss';
+import autoprefixer from 'autoprefixer';
 import { fileURLToPath } from 'url'; // Añade esto
 import { dirname, resolve } from 'path'; // Añade esto
 
@@ -15,5 +17,8 @@ export default defineConfig({
   server: {
     open: true,
     port: 3000,
+  },
+  css: {
+    postcss: './postcss.config.cjs' // Asegúrate que apunta al archivo correcto
   }
 });

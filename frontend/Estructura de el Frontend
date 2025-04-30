@@ -11,6 +11,7 @@
     │   ├── 📂 ui/
     │   │   ├── Button.jsx
     │   │   ├── EnrollmentForm.jsx
+    │   │   ├── EnrollmentStatus.jsx
     │   │   ├── Input.jsx
     │   │   └── SportCard.jsx
     │   ├── 📂 admin/         
@@ -22,6 +23,7 @@
     │   │   ├── FinancialReposrts.jsx
     │   │   ├── DocumentUploader.jsx
     │   │   ├── ChangeHistory.jsx
+    │   │   ├── Sideabar.jsx
     │   │   └── AdminCalendar.jsx
     │   ├── AuthForm.jsx
     │   └── ProtectedRoute.jsx
@@ -40,6 +42,7 @@
     ├── 📂 pages/
     │   ├── AdminPage.jsx
     │   ├── DashboardPage.jsx
+    │   ├── HomePage.jsx
     │   ├── LoginPage.jsx
     │   └── RegisterPage.jsx
     ├── 📂 styles/
@@ -47,7 +50,6 @@
     │   ├── App.css
     │   ├── index.css
     │   ├── Login.css
-    │   ├── main.css
     │   ├── SportCard.css
     │   └── user-dashboard.css
     ├── 📂 utils/             # (Vacía)
@@ -55,4 +57,11 @@
     │   └── export.js
     ├── App.jsx               # Componente principal
     ├── main.jsx              # Punto de entrada
+    ├── index.html             # Punto de entrada
+    ├── vite.config.js        # Configuración de Vite
+    ├── package.json          # Dependencias y scripts
+    ├── package-lock.json     # Bloqueo de dependencias
+    ├── eslint.config.js      # Configuración de ESLint
+    ├── tailwind.config.js    # Configuración de Tailwind CSS
+    ├── postcss.config.js     # Configuración de PostCSS
     └── .env.local            # Variables de entorno

@@ -29,5 +29,16 @@ export default [
         { allowConstantExport: true },
       ],
     },
+    overrides: [
+      {
+        files: ['*.config.js', 'vite.config.js'],
+        env: {
+          node: true
+        },
+        rules: {
+          'no-undef': 'off'
+        }
+      }
+    ]
   },
 ]
