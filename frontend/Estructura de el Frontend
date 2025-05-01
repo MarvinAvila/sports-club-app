@@ -21,11 +21,11 @@
     │   │   ├── StudentTable.jsx
     │   │   ├── MessagingCenter.jsx
     │   │   ├── FinancialReposrts.jsx
-    │   │   ├── DocumentUploader.jsx
     │   │   ├── ChangeHistory.jsx
     │   │   ├── Sideabar.jsx
     │   │   └── AdminCalendar.jsx
     │   ├── AuthForm.jsx
+    │   ├── DocumentUploader.jsx
     │   └── ProtectedRoute.jsx
     ├─── 📂 constants/          # Nueva carpeta
     │       └── roles.js          # Define ROLES 

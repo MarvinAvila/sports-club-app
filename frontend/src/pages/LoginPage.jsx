@@ -1,41 +1,57 @@
-import React, { useState, useContext  } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { authApi } from '../api/auth.api.js'; 
 import { AuthContext } from '../contexts/AuthContextInstance';
 import { useNavigate } from 'react-router-dom';
-
-
 import "../styles/Login.css";
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useContext(AuthContext); // Usar el login del contexto
+  const { login, isAuthenticated } = useContext(AuthContext); // Añade isAuthenticated
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false); // Estado para manejar carga
   const navigate = useNavigate();
-
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
+    setIsLoading(true);
+    setError(null);
+  
     try {
-      const { token, role } = await authApi.login(email, password); // Llama a la API
-      login(token, role); // Actualiza el contexto con el token y el rol
-
-      // Redirige según el rol del usuario
-      if (role === 'admin') {
-        navigate('/admin');  // Redirige al AdminPage
-      } else if (role === 'tutor') {
-        navigate('/dashboard'); 
-      }else {
-        navigate('/dashboard');  // Redirige al home o a una página por defecto
+      const { token, role, user } = await authApi.login(email, password);
+      
+      if (!token) {
+        throw new Error('No se recibió token de autenticación');
       }
-
-
+  
+      // Pasar los datos estructurados correctamente
+      login(token, {
+        role,
+        user: {
+          name: user.name,
+          email: user.email,
+          phone: user.phone
+        }
+      });
+  
     } catch (err) {
-      setError('Credenciales incorrectas. Intenta de nuevo.');
-      err.response && setError(err.response.data.error); // Manejo de errores
+      console.error('Error en login:', err);
+      setIsLoading(false);
+      setError(err.message || 'Error al iniciar sesión');
     }
   };
+
+  // // Efecto para redirigir cuando la autenticación cambia
+  // useEffect(() => {
+  //   if (isAuthenticated) {
+  //     const role = localStorage.getItem('userRole'); // O como almacenes el rol
+  //     if (role === 'admin') {
+  //       navigate('/admin');
+  //     } else {
+  //       navigate('/dashboard');
+  //     }
+  //   }
+  // }, [isAuthenticated, navigate]);
 
   return (
     <div className="login-background">
@@ -53,6 +69,7 @@ const LoginPage = () => {
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 required
               />
             </div>
@@ -63,6 +80,7 @@ const LoginPage = () => {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
                 required
               />
             </div>
@@ -71,8 +89,12 @@ const LoginPage = () => {
               <a href="#forgot">Forgot password?</a>
             </div>
             
-            <button type="submit" className="login-button">
-              LOGIN
+            <button 
+              type="submit" 
+              className="login-button"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Processing...' : 'LOGIN'}
             </button>
             
             <div className="signup-text">

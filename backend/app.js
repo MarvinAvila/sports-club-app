@@ -6,8 +6,21 @@ import dotenv from 'dotenv';
 dotenv.config();
 const app = express();
 
-// Middlewares
-app.use(cors());
+// Configuración CORS mejorada
+const corsOptions = {
+  origin: 'http://localhost:3000', // URL exacta de tu frontend
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+
+// Aplica CORS con las opciones
+app.use(cors(corsOptions));
+
+// Middleware para manejar preflight OPTIONS
+app.options('*', cors(corsOptions));
+
+// Middlewares adicionales
 app.use(express.json());
 
 // Rutas

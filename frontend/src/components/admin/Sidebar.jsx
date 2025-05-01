@@ -28,17 +28,6 @@ const Sidebar = () => {
           </a>
         </nav>
       </div>
-
-      <button
-        className="flex items-center space-x-2 text-red-400 hover:text-red-600"
-        onClick={() => {
-          localStorage.removeItem('user');
-          window.location.href = '/login';
-        }}
-      >
-        <FiLogOut />
-        <span>Salir</span>
-      </button>
     </div>
   );
 };

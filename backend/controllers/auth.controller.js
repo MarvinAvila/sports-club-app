@@ -75,6 +75,9 @@ export const loginUser = async (req, res) => {
     res.json({
       token: data.session.access_token, // Este es el token que debes usar para las llamadas protegidas
       role: usuario.rol || 'user',       // Rol del usuario
+      nombre: usuario.nombre,    // <- Añadir
+      email: usuario.email,      // <- Añadir
+      telefono: usuario.telefono 
     });
 
   } catch (error) {

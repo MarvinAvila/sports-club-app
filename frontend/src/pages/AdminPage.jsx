@@ -1,16 +1,22 @@
-import React from "react";
+import React from "react"; 
 import Sidebar from "../components/admin/Sidebar";
 import StudentTable from "../components/admin/StudentTable";
 import AdminCalendar from "../components/admin/AdminCalendar";
 import FinancialReports from "../components/admin/FinancialReports";
-import MessagingCenter from "../components/admin/MessagingCenter";
-import DocumentUploader from "../components/admin/DocumentUploader";
+import MessagingCenter from "../components/MessagingCenter";
+import DocumentUploader from "../components/DocumentUploader";
 import ChangeHistory from "../components/admin/ChangeHistory";
 import StudentActions from "../components/admin/StudentActions";
 import useStudents from "../hooks/useStudents";
+import ProfileDropdown from "../components/ProfileDropdown";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+ // Agrega useEffect aquí
 
 const AdminPage = () => {
   const { students, loading, updateStatus } = useStudents();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleSendReminders = async () => {
     // Implementa el envío de recordatorios
@@ -35,8 +41,8 @@ const AdminPage = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-gray-800 shadow-sm z-10">
-          <div className="px-4 py-3 flex justify-between items-center">
+        <header className="bg-gray-800 shadow-sm z-10 px-6 py-4">
+          <div className="flex justify-between items-center">
             <div className="flex items-center space-x-4">
               <h1 className="text-xl font-semibold text-white">NALIKA</h1>
               <div className="relative">
@@ -61,77 +67,88 @@ const AdminPage = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-300">Welcome, Admin</div>
-              <div className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center text-white">
-                A
-              </div>
+            <ProfileDropdown user={user} role="Admin" />
             </div>
           </div>
         </header>
 
         {/* Content */}
-        <main className="flex-1 overflow-y-auto p-4 bg-gray-800">
+        <main className="flex-1 overflow-y-auto p-6 bg-gray-800">
           {/* Dashboard Header */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-white">Dashboard</h2>
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-white mb-2">Dashboard</h2>
             <p className="text-gray-300">Welcome to Admin Template</p>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+          {/* Stats Cards - Aumenté el espaciado */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             {[
               {
                 title: "Total Alumnos",
                 value: "1,542",
                 change: "+18%",
                 icon: "👥",
+                color: "bg-blue-600",
               },
               {
                 title: "Inscritos",
                 value: "1,204",
                 change: "+5.5%",
                 icon: "✅",
+                color: "bg-green-600",
               },
               {
                 title: "Pendientes",
                 value: "358",
                 change: "-2.3%",
                 icon: "⏳",
+                color: "bg-yellow-600",
               },
               {
                 title: "Ingresos",
                 value: "$70,000",
                 change: "+80.4%",
                 icon: "💰",
+                color: "bg-purple-600",
               },
             ].map((stat, index) => (
-              <div key={index} className="bg-gray-700 rounded-xl shadow p-6">
-                <div className="flex justify-between">
+              <div
+                key={index}
+                className={`${stat.color} rounded-xl shadow-lg p-6 text-white`}
+              >
+                <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-sm font-medium text-gray-300">
+                    <p className="text-sm font-medium opacity-80">
                       {stat.title}
                     </p>
-                    <p className="text-2xl font-semibold mt-1 text-white">{stat.value}</p>
-                    <p className={`text-xs mt-2 ${stat.change.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>
-                      {stat.change}
-                    </p>
+                    <p className="text-2xl font-bold mt-2">{stat.value}</p>
                   </div>
-                  <div className="text-3xl">{stat.icon}</div>
+                  <span className="text-3xl">{stat.icon}</span>
                 </div>
+                <p
+                  className={`text-sm mt-4 font-medium ${
+                    stat.change.startsWith("+")
+                      ? "text-green-200"
+                      : "text-red-200"
+                  }`}
+                >
+                  {stat.change} vs último mes
+                </p>
               </div>
             ))}
           </div>
 
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            {/* Student Table */}
-            <div className="lg:col-span-2 bg-gray-700 rounded-xl shadow overflow-hidden">
-              <div className="p-4 border-b border-gray-600 flex justify-between items-center">
-                <h3 className="font-semibold text-white">Gestión de Alumnos</h3>
+          {/* Main Content Grid - Aumenté el espaciado vertical */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            {/* Student Table - Ahora con más espacio */}
+            <div className="lg:col-span-2 bg-gray-700 rounded-xl shadow-lg overflow-hidden">
+              <div className="p-6 border-b border-gray-600 flex justify-between items-center">
+                <h3 className="text-xl font-semibold text-white">
+                  Gestión de Alumnos
+                </h3>
                 <StudentActions students={students} />
               </div>
-
-              <div className="p-4">
+              <div className="p-1">
                 <StudentTable
                   students={students}
                   onStatusChange={updateStatus}
@@ -139,10 +156,10 @@ const AdminPage = () => {
               </div>
             </div>
 
-            {/* Calendar */}
-            <div className="bg-gray-700 rounded-xl shadow overflow-hidden">
-              <div className="p-4 border-b border-gray-600">
-                <h3 className="font-semibold text-white">Calendario</h3>
+            {/* Calendar - Con mejor espaciado */}
+            <div className="bg-gray-700 rounded-xl shadow-lg overflow-hidden">
+              <div className="p-6 border-b border-gray-600">
+                <h3 className="text-xl font-semibold text-white">Calendario</h3>
               </div>
               <div className="p-4">
                 <AdminCalendar />
@@ -150,44 +167,55 @@ const AdminPage = () => {
             </div>
           </div>
 
-          {/* Second Row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Second Row - Espaciado consistente */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Financial Reports */}
-            <div className="bg-gray-700 rounded-xl shadow overflow-hidden">
-              <div className="p-4 border-b border-gray-600">
-                <h3 className="font-semibold text-white">Reportes Financieros</h3>
+            <div className="bg-gray-700 rounded-xl shadow-lg overflow-hidden">
+              <div className="p-6 border-b border-gray-600">
+                <h3 className="text-xl font-semibold text-white">
+                  Reportes Financieros
+                </h3>
               </div>
-              <div className="p-4">
+              <div className="p-6">
                 <FinancialReports />
               </div>
             </div>
 
             {/* Messaging Center */}
-            <div className="bg-gray-700 rounded-xl shadow overflow-hidden">
-              <div className="p-4 border-b border-gray-600">
-                <h3 className="font-semibold text-white">Centro de Mensajes</h3>
+            <div className="bg-gray-700 rounded-xl shadow-lg overflow-hidden">
+              <div className="p-6 border-b border-gray-600">
+                <h3 className="text-xl font-semibold text-white">
+                  Centro de Mensajes
+                </h3>
+                <p className="text-gray-400 text-sm mt-1">
+                  Envía mensajes a usuarios
+                </p>
               </div>
-              <div className="p-4">
+              <div className="p-6">
                 <MessagingCenter />
               </div>
             </div>
 
-            {/* Quick Actions */}
-            <div className="space-y-6">
-              <div className="bg-gray-700 rounded-xl shadow overflow-hidden">
-                <div className="p-4 border-b border-gray-600">
-                  <h3 className="font-semibold text-white">Subir Documentos</h3>
+            {/* Quick Actions - Espaciado mejorado */}
+            <div className="space-y-8">
+              <div className="bg-gray-700 rounded-xl shadow-lg overflow-hidden">
+                <div className="p-6 border-b border-gray-600">
+                  <h3 className="text-xl font-semibold text-white">
+                    Subir Documentos
+                  </h3>
                 </div>
-                <div className="p-4">
+                <div className="p-6">
                   <DocumentUploader />
                 </div>
               </div>
 
-              <div className="bg-gray-700 rounded-xl shadow overflow-hidden">
-                <div className="p-4 border-b border-gray-600">
-                  <h3 className="font-semibold text-white">Historial de Cambios</h3>
+              <div className="bg-gray-700 rounded-xl shadow-lg overflow-hidden">
+                <div className="p-6 border-b border-gray-600">
+                  <h3 className="text-xl font-semibold text-white">
+                    Historial de Cambios
+                  </h3>
                 </div>
-                <div className="p-4">
+                <div className="p-6">
                   <ChangeHistory />
                 </div>
               </div>

@@ -1,30 +1,48 @@
 // AuthContext.jsx
 import React, { useState } from 'react';
 import { AuthContext } from './AuthContextInstance';
-import { useNavigate } from 'react-router-dom'; // Necesario para redirección
+import { useNavigate } from 'react-router-dom';
 
-// Componente que proporciona el contexto de autenticación
 export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(localStorage.getItem('token') || null);
-  const [role, setRole] = useState(localStorage.getItem('role') || null);
-  const navigate = useNavigate(); // Para redirigir después del login
+  // Estado unificado con todos los datos de autenticación
+  const [authState, setAuthState] = useState(() => {
+    const storedAuth = localStorage.getItem('auth');
+    return storedAuth ? JSON.parse(storedAuth) : {
+      token: null,
+      role: null,
+      user: null,
+      isAuthenticated: false
+    };
+  });
 
-  // Función para iniciar sesión
-  const login = (newToken, newRole) => {
-    setToken(newToken);
-    setRole(newRole);
-    localStorage.setItem('token', newToken); // Guardar en localStorage
-    localStorage.setItem('role', newRole);   // Guardar en localStorage
-    navigate(getRedirectPath(newRole)); // Redirige según el rol
+  const navigate = useNavigate();
+
+  const login = (newToken, userData) => {
+    const newAuthState = {
+      token: newToken,
+      role: userData.role,
+      user: userData.user,
+      isAuthenticated: true
+    };
+    
+    // Guardar en estado y localStorage
+    setAuthState(newAuthState);
+    localStorage.setItem('auth', JSON.stringify(newAuthState));
+    
+    // Redirigir inmediatamente basado en el rol
+    const redirectPath = userData.role === 'admin' ? '/admin' : '/dashboard';
+    navigate(redirectPath);
   };
 
-  // Función para cerrar sesión
   const logout = () => {
-    setToken(null);
-    setRole(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    navigate('/login'); // Redirige a login después de cerrar sesión
+    setAuthState({
+      token: null,
+      role: null,
+      user: null,
+      isAuthenticated: false
+    });
+    localStorage.removeItem('auth');
+    navigate('/login');
   };
 
   // Función que define la ruta de redirección según el rol
@@ -39,9 +57,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ token, role, login, logout }}>
+    <AuthContext.Provider value={{
+      ...authState, // Incluye token, role, user e isAuthenticated
+      login,
+      logout
+    }}>
       {children}
     </AuthContext.Provider>
   );
 };
-
