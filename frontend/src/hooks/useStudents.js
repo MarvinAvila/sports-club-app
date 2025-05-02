@@ -1,60 +1,43 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { fetchStudents, fetchEnrollments, updateEnrollmentStatus as apiUpdateStatus } from '@/api/students.api';
 
-const useStudents = () => {
+export const useStudents = () => {
   const [students, setStudents] = useState([]);
+  const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const fetchStudents = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('alumnos')
-        .select('*, inscripciones(*, deportes(*))');
-
-      if (error) throw error;
-
-      const formattedStudents = data.map(alumno => ({
-        id: alumno.id,
-        name: alumno.nombre,
-        email: '', // Puedes obtener esto de otra tabla si es necesario
-        status: alumno.inscripciones[0]?.estado || 'No inscrito',
-        hasPaid: alumno.inscripciones[0]?.pagos?.length > 0
-      }));
-
-      setStudents(formattedStudents);
-    } catch (error) {
-      console.error('Error fetching students:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateStatus = async (studentId, newStatus) => {
-    try {
-      // Aquí debes implementar la actualización en Supabase
-      // Esto es un ejemplo, ajusta según tu esquema
-      const { error } = await supabase
-        .from('inscripciones')
-        .update({ estado: newStatus.toLowerCase() })
-        .eq('alumno_id', studentId);
-
-      if (error) throw error;
-
-      // Actualizar el estado local
-      setStudents(students.map(student => 
-        student.id === studentId ? { ...student, status: newStatus } : student
-      ));
-    } catch (error) {
-      console.error('Error updating status:', error);
-    }
-  };
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchStudents();
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const [studentsData, enrollmentsData] = await Promise.all([
+          fetchStudents(),
+          fetchEnrollments()
+        ]);
+        setStudents(studentsData);
+        setEnrollments(enrollmentsData);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
   }, []);
 
-  return { students, loading, updateStatus, fetchStudents };
-};
+  const updateStatus = async (enrollmentId, newStatus) => {
+    try {
+      await apiUpdateStatus(enrollmentId, newStatus);
+      setEnrollments(prev => prev.map(e => 
+        e.id === enrollmentId ? { ...e, estado: newStatus } : e
+      ));
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
+  return { students, enrollments, loading, error, updateStatus };
+};
 export default useStudents;

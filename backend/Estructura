@@ -2,27 +2,36 @@
 ├── 📂 config
 │   └── supabaseClient.js       # Configuración de cliente Supabase
 ├── 📂 controllers
-│   └── auth.controller.js      # Lógica de los endpoints de autenticación
+│   ├── auth.controller.js      # Controlador de autenticación
+│   ├── alumno.controller.js    # Controlador de alumnos
+│   ├── deporte.controller.js   # Controlador de deportes
+│   ├── inscripcion.controller.js # Controlador de inscripciones
+│   ├── notificacion.controller.js # Controlador de notificaciones
+│   ├── pago.controller.js      # Controlador de pagos
+│   └── tutor.controller.js     # Controlador de tutores
 ├── 📂 middlewares
-│   └── auth.middleware.js      # Middlewares de autenticación
-├── 📂 node_modules             # Dependencias de Node.js
-├── 📂 repositories             # (Vacía)
+│   ├── auth.middleware.js      # Middleware de autenticación
+│   └── error.middleware.js     # Middleware de manejo de errores
 ├── 📂 routes
-│   └── auth.routes.js          # Rutas de autenticación
-├── 📂 services
-│   └── supabaseService.js      # Lógica de servicio Supabase
+│   ├── auth.routes.js          # Rutas de autenticación
+│   ├── alumno.routes.js        # Rutas de alumnos
+│   ├── deporte.routes.js       # Rutas de deportes
+│   ├── inscripcion.routes.js   # Rutas de inscripciones
+│   ├── notificacion.routes.js  # Rutas de notificaciones
+│   ├── pago.routes.js          # Rutas de pagos
+│   └── tutor.routes.js         # Rutas de tutores
 ├── 📂 models
-│   ├── AlumnoModel.js           # Modelo para la tabla "alumnos"
-│   ├── DeporteModel.js          # Modelo para la tabla "deportes"
-│   ├── InscripcionModel.js      # Modelo para la tabla "inscripciones"
-│   ├── NotificacionModel.js     # Modelo para la tabla "notificaciones"
-│   ├── PagoModel.js             # Modelo para la tabla "pagos"
-│   ├── TutorAlumnoModel.js      # Modelo para la tabla "tutores_alumnos"
-│   └── UsuarioModel.js          # Modelo para la tabla "usuarios"
-├── 📂 types                    # (Vacía)
-├── 📂 database                 # (Vacía)
-├── 🗒️ .env                    # Variables de entorno
-├── 🗒️ app.js                  # Configuración principal de la app
-├── 🗒️ package.json            # Dependencias y scripts
-├── 🗒️ package-lock.json       # Versiones exactas de dependencias
-└── 🗒️ server.js               # Punto de entrada del servidor
+│   ├── AlumnoModel.js          # Modelo para la tabla "alumnos"
+│   ├── DeporteModel.js         # Modelo para la tabla "deportes"
+│   ├── InscripcionModel.js     # Modelo para la tabla "inscripciones"
+│   ├── NotificacionModel.js    # Modelo para la tabla "notificaciones"
+│   ├── PagoModel.js            # Modelo para la tabla "pagos"
+│   ├── TutorAlumnoModel.js     # Modelo para la tabla "tutores_alumnos"
+│   └── UsuarioModel.js         # Modelo para la tabla "usuarios"
+├── 📂 utils
+│   ├── logger.js               # Utilidades de logging
+│   └── validators.js           # Validadores de datos
+├── 🗒️ .env                     # Variables de entorno
+├── 🗒️ app.js                   # Configuración principal
+├── 🗒️ package.json             # Dependencias y scripts
+└── 🗒️ package-lock.json        # Versiones exactas de dependencias

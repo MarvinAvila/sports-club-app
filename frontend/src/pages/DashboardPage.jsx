@@ -3,26 +3,89 @@ import { useNavigate } from "react-router-dom";
 import DocumentUploader from "@/components/DocumentUploader";
 import EnrollmentStatus from "@/components/ui/EnrollmentStatus";
 import MessagingCenter from "@/components/MessagingCenter";
-import TutorLayout from "@/components/ui/TutorLayout";
 import ProfileDropdown from "@/components/ProfileDropdown";
+import { useEffect, useState } from "react";
+import { ROLES } from "@/constants/roles";
+import PaymentHistory from "@/components/ui/PaymentHistory";
+import { usePagos } from '@/contexts/PagosContext';
+import { fetchInscripcionesByTutor } from '@/api/inscripciones.api';
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [enrollments, setEnrollments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { fetchPagos } = usePagos();
+
+  if (!user) {
+    return (
+      <div className="flex min-h-screen bg-gray-900 text-gray-100 w-full">
+        <div className="ml-64 flex-1 flex items-center justify-center">
+          <div className="text-xl font-semibold">
+            No autenticado. Redirigiendo...
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  useEffect(() => {
+    console.log("Datos completos del usuario:", user);
+    console.log("User ID:", user?.id);
+
+    if (!user || !user.id) {
+      console.error("User ID no disponible. User object:", user);
+      setLoading(false);
+      return;
+    }
+    const fetchTutorData = async () => {
+      console.log("Ejecutando fetchTutorData");
+      if (!user?.id) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+        console.log("Fetching inscripciones..."); // <-- Agrega esto
+        const inscripciones = await fetchInscripcionesByTutor(user.id);
+        console.log("Datos recibidos:", inscripciones); // <-- Agrega esto
+        setEnrollments(inscripciones);
+      } catch (err) {
+        console.error("Error completo:", err); // <-- Mejora el logging
+        setError(err.message); // <-- Usa err.message para más detalles
+      } finally {
+        console.log("Finalizando carga"); // <-- Agrega esto
+        setLoading(false);
+      }
+    };
+
+    fetchTutorData();
+  }, [user?.id]);
 
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
-  // Datos de ejemplo
-  const studentData = {
-    name: "Juan Pérez",
-    grade: "5° Primaria",
-    enrollmentStatus: "Pendiente",
-    paymentStatus: "Por pagar",
-    dueDate: "15 de Mayo, 2024",
-  };
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-gray-900 text-gray-100 w-full">
+        <div className="ml-64 flex-1 flex items-center justify-center">
+          <div className="text-xl font-semibold">Cargando datos...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen bg-gray-900 text-gray-100 w-full">
+        <div className="ml-64 flex-1 flex items-center justify-center">
+          <div className="text-xl font-semibold text-red-400">{error}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-900 text-gray-100 w-full">
@@ -54,8 +117,6 @@ export default function DashboardPage() {
                 Inicio
               </a>
             </li>
-            <li>
-            </li>
           </ul>
         </nav>
       </div>
@@ -69,9 +130,12 @@ export default function DashboardPage() {
               Bienvenido,{" "}
               <span className="text-blue-400">{user?.name || "Tutor"}</span>
             </h1>
-            // Reemplaza la sección del avatar con:
             <div className="flex items-center space-x-4">
-            <ProfileDropdown user={user} role="Tutor" />
+              <ProfileDropdown
+                user={user}
+                role="Tutor"
+                onLogout={handleLogout}
+              />
             </div>
           </div>
         </header>
@@ -79,14 +143,53 @@ export default function DashboardPage() {
         {/* Contenido */}
         <main className="flex-1 overflow-y-auto p-6 bg-gray-800">
           <div className="max-w-6xl mx-auto">
-            {/* Estado de reinscripción */}
-            <div className="bg-gray-700 rounded-xl shadow-lg p-6 mb-6">
-              <h2 className="text-2xl font-bold text-white mb-4 pb-2 border-b border-gray-600">
-                Estado de Reinscripción
-              </h2>
-              <EnrollmentStatus student={studentData} />
-            </div>
+            {enrollments.length === 0 ? (
+              <div className="bg-gray-700 rounded-xl shadow-lg p-6 mb-6 text-center">
+                <h2 className="text-2xl font-bold text-white mb-4">
+                  No tienes alumnos inscritos
+                </h2>
+                <p className="text-gray-300">
+                  Contacta con administración para asociarte a alumnos
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Mostrar estado de cada inscripción */}
+                {enrollments.map((enrollment) => (
+                  <div
+                    key={enrollment.id}
+                    className="bg-gray-700 rounded-xl shadow-lg p-6 mb-6"
+                  >
+                    <h2 className="text-2xl font-bold text-white mb-4 pb-2 border-b border-gray-600">
+                      {enrollment.alumnos.nombre} - {enrollment.deportes.nombre}
+                    </h2>
 
+                    <EnrollmentStatus enrollment={enrollment} />
+
+                    {/* DocumentUploader actualizado */}
+                    <div className="mt-4">
+                      <DocumentUploader
+                        purpose="payment"
+                        enrollmentId={enrollment.id}
+                        onUploadSuccess={() => {
+                          // Actualizar el estado local o recargar datos
+                          setEnrollments((prev) =>
+                            prev.map((e) =>
+                              e.id === enrollment.id
+                                ? { ...e, estado: "pendiente" }
+                                : e
+                            )
+                          );
+                        }}
+                      />
+                    </div>
+
+                    {/* Nuevo componente de historial de pagos */}
+                    <PaymentHistory inscripcionId={enrollment.id} />
+                  </div>
+                ))}
+              </>
+            )}
             {/* Sección de documentos y mensajes */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* Subir comprobante */}

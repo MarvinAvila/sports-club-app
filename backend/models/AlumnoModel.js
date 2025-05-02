@@ -41,3 +41,32 @@ export const createAlumno = async (alumnoData) => {
     throw new Error(error.message);
   }
 };
+
+export const updateAlumno = async (alumnoId, updateData) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('alumnos')
+      .update(updateData)
+      .eq('id', alumnoId)
+      .select();  // Esto devuelve el registro actualizado
+
+    if (error) throw new Error('Error al actualizar el alumno');
+    return data[0];  // Devuelve el primer elemento del array
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+export const deleteAlumno = async (alumnoId) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('alumnos')
+      .delete()
+      .eq('id', alumnoId);
+
+    if (error) throw new Error('Error al eliminar el alumno');
+    return data;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};

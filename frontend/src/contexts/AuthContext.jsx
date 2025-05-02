@@ -17,21 +17,26 @@ export const AuthProvider = ({ children }) => {
 
   const navigate = useNavigate();
 
-  const login = (newToken, userData) => {
+  const login = (token, role, userData) => {
     const newAuthState = {
-      token: newToken,
-      role: userData.role,
-      user: userData.user,
-      isAuthenticated: true
+      token,
+      role,
+      user: {
+        id: userData.id,
+        auth_id: userData.auth_id,
+        name: userData.nombre || userData.name,
+        email: userData.email,
+        phone: userData.telefono || userData.phone
+      },
+      isAuthenticated: true,
     };
     
-    // Guardar en estado y localStorage
+    // Solo una vez
     setAuthState(newAuthState);
     localStorage.setItem('auth', JSON.stringify(newAuthState));
     
-    // Redirigir inmediatamente basado en el rol
-    const redirectPath = userData.role === 'admin' ? '/admin' : '/dashboard';
-    navigate(redirectPath);
+    // Redirigir basado en el rol
+    navigate(role === 'admin' ? '/admin' : '/dashboard');
   };
 
   const logout = () => {

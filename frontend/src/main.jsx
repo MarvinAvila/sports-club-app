@@ -1,10 +1,20 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import './styles/index.css';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App";
+import "./styles/index.css";
+import { PagosProvider } from "./contexts/PagosContext";
 
-ReactDOM.createRoot(document.getElementById('root')).render(
+if (!localStorage.getItem("theme")) {
+  localStorage.setItem(
+    "theme",
+    window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <App />
+    <PagosProvider>
+      <App />
+    </PagosProvider>
   </React.StrictMode>
 );

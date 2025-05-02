@@ -1,8 +1,58 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import { createPago } from '@/api/pagos.api';
 
-const DocumentUploader = () => {
-  const [file, setFile] = useState(null)
+const DocumentUploader = ({ purpose, enrollmentId, onUploadSuccess }) => {
+  const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const handleUpload = async () => {
+    if (!file) {
+      setError('Por favor selecciona un archivo');
+      return;
+    }
+
+    setUploading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      // 1. Subir archivo (mantén tu código existente)
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${purpose}_${Date.now()}.${fileExt}`;
+      const filePath = `${purpose}s/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // 2. Obtener URL (mantén tu código existente)
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      // 3. Cambia esta parte para crear pago en lugar de actualizar inscripción
+      await createPago({
+        inscripcion_id: enrollmentId,
+        comprobante_url: publicUrl,
+        estado: 'pendiente',
+        fecha_pago: new Date().toISOString(),
+        monto: 0 // Puedes obtener este valor del contexto si es necesario
+      });
+
+      setSuccess('Comprobante subido exitosamente');
+      setFile(null);
+      onUploadSuccess?.(); // Notificar al componente padre
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
     <div className="bg-primary-800 rounded-lg p-4 shadow">
@@ -13,6 +63,7 @@ const DocumentUploader = () => {
           className="hidden" 
           id="file-upload"
           onChange={(e) => setFile(e.target.files[0])}
+          accept=".pdf,.jpg,.jpeg,.png"
         />
         <label 
           htmlFor="file-upload" 
@@ -29,13 +80,38 @@ const DocumentUploader = () => {
           </div>
         </label>
       </div>
+      
+      {file && (
+        <div className="mt-3 flex justify-between items-center">
+          <span className="text-sm text-gray-300 truncate">
+            {file.name}
+          </span>
+          <button 
+            onClick={() => setFile(null)}
+            className="text-red-400 hover:text-red-300 text-sm"
+          >
+            Eliminar
+          </button>
+        </div>
+      )}
+      
+      {error && (
+        <div className="mt-2 text-red-400 text-sm">{error}</div>
+      )}
+      
+      {success && (
+        <div className="mt-2 text-green-400 text-sm">{success}</div>
+      )}
+
       <button 
         className="mt-4 bg-success hover:bg-green-600 text-white font-medium py-2 px-4 rounded transition-colors w-full"
-        disabled={!file}
+        disabled={!file || uploading}
+        onClick={handleUpload}
       >
-        Subir Documento
+        {uploading ? 'Subiendo...' : 'Subir Documento'}
       </button>
     </div>
-  )
-}
+  );
+};
+
 export default DocumentUploader;

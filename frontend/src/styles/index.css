@@ -20,41 +20,44 @@ a:hover {
   min-height: 100vh;
 } */
 
+/* Estilos base para el tema */
+:root {
+  --background: 255, 255, 255;
+  --foreground: 0, 0, 0;
+  --card: 255, 255, 255;
+  --card-foreground: 0, 0, 0;
+}
+
+.dark {
+  --background: 15, 23, 42;  /* slate-900 */
+  --foreground: 248, 250, 252; /* slate-50 */
+  --card: 30, 41, 59; /* slate-800 */
+  --card-foreground: 248, 250, 252;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
   width: 100vw;
-  overflow-x: hidden; /* Esto previene el scroll horizontal */
+  overflow-x: hidden;
+  background-color: rgb(var(--background));
+  color: rgb(var(--foreground));
+  transition: background-color 0.3s, color 0.3s;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
+/* Tus estilos existentes... */
+a {
   font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
+  color: #646cff;
+  text-decoration: inherit;
 }
-button:hover {
-  border-color: #646cff;
+a:hover {
+  color: #535bf2;
 }
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
 @layer components {
   .card {
-    @apply bg-white rounded-xl shadow-md overflow-hidden;
+    @apply bg-[rgb(var(--card))] text-[rgb(var(--card-foreground))] rounded-xl shadow-md overflow-hidden;
   }
   .btn {
     @apply px-4 py-2 rounded-lg font-medium transition-colors;
@@ -83,30 +86,27 @@ button:focus-visible {
 }
 
 /* Estilos personalizados para react-calendar */
+
 .react-calendar {
-  @apply bg-gray-700 text-gray-100 border-gray-600;
+  @apply bg-[rgb(var(--card))] text-[rgb(var(--card-foreground))] border-gray-200 dark:border-gray-600;
 }
 
 .react-calendar__navigation button {
-  @apply text-white bg-gray-700 hover:bg-gray-600;
+  @apply text-[rgb(var(--card-foreground))] bg-[rgb(var(--card))] hover:bg-opacity-80;
 }
 
 .react-calendar__month-view__weekdays {
-  @apply text-gray-300;
+  @apply text-[rgb(var(--card-foreground))] opacity-70;
 }
 
 .react-calendar__tile {
-  @apply text-white hover:bg-gray-600;
+  @apply text-[rgb(var(--card-foreground))] hover:bg-opacity-20;
 }
 
 .react-calendar__tile--now {
-  @apply bg-purple-600 text-white;
+  @apply bg-accent-500 text-white;
 }
 
 .react-calendar__tile--active {
-  @apply bg-purple-500 text-white;
-}
-
-.react-calendar__tile:disabled {
-  @apply text-gray-500;
+  @apply bg-accent-400 text-white;
 }
