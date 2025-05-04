@@ -39,6 +39,9 @@ export default function DashboardPage() {
       setLoading(false);
       return;
     }
+
+    let cancelled = false;
+    
     const fetchTutorData = async () => {
       console.log("Ejecutando fetchTutorData");
       if (!user?.id) return;
@@ -60,6 +63,10 @@ export default function DashboardPage() {
     };
 
     fetchTutorData();
+
+    return () => {
+      cancelled = true; // Evita que setState se ejecute si el componente ya se desmontó
+    };
   }, [user?.id]);
 
   const handleLogout = () => {

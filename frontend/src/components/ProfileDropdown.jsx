@@ -1,24 +1,28 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { useNavigate } from 'react-router-dom';
-import { 
-  FiUser, FiSettings, FiMoon, FiSun, 
-  FiLogOut, FiMail, FiHelpCircle, FiChevronDown 
-} from 'react-icons/fi';
-import { useTheme } from '@/contexts/ThemeContext'; // Importa el contexto del tema
+import React, { useState, useRef, useEffect } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import {
+  FiUser,
+  FiSettings,
+  FiMoon,
+  FiSun,
+  FiLogOut,
+  FiMail,
+  FiHelpCircle,
+  FiChevronDown,
+} from "react-icons/fi";
+import { useTheme } from "@/contexts/ThemeContext"; // Importa el contexto del tema
 
-
-
-const ProfileDropdown = ({ user, role = 'Usuario' }) => {
-    const { logout, user: authUser } = useAuth();
-    const { theme, toggleTheme } = useTheme(); // Usa el contexto del tema
-    const navigate = useNavigate();
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef(null);
+const ProfileDropdown = ({ user, role = "Usuario" }) => {
+  const { logout, user: authUser } = useAuth();
+  const { theme, toggleTheme } = useTheme(); // Usa el contexto del tema
+  const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   useEffect(() => {
@@ -29,15 +33,16 @@ const ProfileDropdown = ({ user, role = 'Usuario' }) => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   // Datos reales del usuario desde auth o props
   const userData = {
     name: authUser?.name || user?.name || role,
-    email: authUser?.email || user?.email || `${role.toLowerCase()}@escuela.com`,
-    avatar: authUser?.avatar || user?.avatar
+    email:
+      authUser?.email || user?.email || `${role.toLowerCase()}@escuela.com`,
+    avatar: authUser?.avatar || user?.avatar,
   };
 
   return (
@@ -51,7 +56,11 @@ const ProfileDropdown = ({ user, role = 'Usuario' }) => {
           <div className="h-9 w-9 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-medium shadow-md group-hover:from-purple-600 group-hover:to-blue-600 transition-all">
             {userData.name.charAt(0).toUpperCase()}
           </div>
-          <FiChevronDown className={`ml-1 text-gray-400 dark:text-gray-300 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          <FiChevronDown
+            className={`ml-1 text-gray-400 dark:text-gray-300 transition-transform ${
+              isOpen ? "rotate-180" : ""
+            }`}
+          />
         </div>
       </button>
 
@@ -64,8 +73,12 @@ const ProfileDropdown = ({ user, role = 'Usuario' }) => {
                 {userData.name.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{userData.name}</p>
-                <p className="text-xs text-gray-600 dark:text-gray-300 truncate">{userData.email}</p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                  {userData.name}
+                </p>
+                <p className="text-xs text-gray-600 dark:text-gray-300 truncate">
+                  {userData.email}
+                </p>
                 <div className="mt-1">
                   <span className="text-xs px-2 py-1 bg-gray-200/50 dark:bg-gray-600/50 text-gray-700 dark:text-gray-200 rounded-full inline-block">
                     {role}
@@ -78,8 +91,14 @@ const ProfileDropdown = ({ user, role = 'Usuario' }) => {
           {/* Menú principal */}
           <div className="py-2 space-y-1">
             <MenuItem icon={<FiUser className="w-4 h-4" />} text="Mi perfil" />
-            <MenuItem icon={<FiSettings className="w-4 h-4" />} text="Configuración" />
-            <MenuItem icon={<FiHelpCircle className="w-4 h-4" />} text="Ayuda" />
+            <MenuItem
+              icon={<FiSettings className="w-4 h-4" />}
+              text="Configuración"
+            />
+            <MenuItem
+              icon={<FiHelpCircle className="w-4 h-4" />}
+              text="Ayuda"
+            />
           </div>
 
           {/* Preferencias con toggle */}
@@ -87,12 +106,12 @@ const ProfileDropdown = ({ user, role = 'Usuario' }) => {
             <div className="px-4 py-1 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               Preferencias
             </div>
-            <button 
+            <button
               onClick={toggleTheme}
               className="w-full flex items-center justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
             >
               <div className="flex items-center">
-                {theme === 'dark' ? (
+                {theme === "dark" ? (
                   <FiMoon className="w-4 h-4 mr-3 text-purple-400" />
                 ) : (
                   <FiSun className="w-4 h-4 mr-3 text-yellow-500" />
@@ -100,14 +119,14 @@ const ProfileDropdown = ({ user, role = 'Usuario' }) => {
                 <span>Tema</span>
               </div>
               <span className="text-xs bg-gray-200/50 dark:bg-gray-600/50 px-2 py-1 rounded">
-                {theme === 'dark' ? 'Oscuro' : 'Claro'}
+                {theme === "dark" ? "Oscuro" : "Claro"}
               </span>
             </button>
           </div>
 
           {/* Cerrar sesión */}
           <div className="py-2">
-            <button 
+            <button
               onClick={handleLogout}
               className="w-full flex items-center px-4 py-2 text-sm text-red-500 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
             >
@@ -117,27 +136,22 @@ const ProfileDropdown = ({ user, role = 'Usuario' }) => {
           </div>
         </div>
       )}
-
-      {/* Estilos de animación (se mantienen igual) */}
-      <style jsx>{`
-        .animate-fade-in {
-          animation: fadeIn 0.2s ease-out forwards;
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-      `}</style>
     </div>
   );
 };
 
 // Componente auxiliar actualizado para tema claro/oscuro
-const MenuItem = ({ icon, text }) => (
-  <a href="#" className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors">
-    <span className="mr-3">{icon}</span>
-    <span>{text}</span>
-  </a>
-);
+const MenuItem = ({ icon, text }) => {
+  console.log(icon);
+  return (
+    <a
+      href="#"
+      className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+    >
+      <span className="mr-3">{icon}</span>
+      <span>{text}</span>
+    </a>
+  );
+};
 
 export default ProfileDropdown;

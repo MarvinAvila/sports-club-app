@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
+import { BrowserRouter as Router } from "react-router-dom";
+import AuthWrapper from "./contexts/AuthProvider";
 import "./styles/index.css";
 import { PagosProvider } from "./contexts/PagosContext";
 
@@ -13,8 +14,10 @@ if (!localStorage.getItem("theme")) {
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <PagosProvider>
-      <App />
-    </PagosProvider>
+    <Router>
+      <PagosProvider>
+        <AuthWrapper />
+      </PagosProvider>
+    </Router>
   </React.StrictMode>
 );
