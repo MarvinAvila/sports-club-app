@@ -4,7 +4,7 @@ import {
   createNotificacion as createNotificacionModel,
   updateNotificacion as updateNotificacionModel,
   deleteNotificacion as deleteNotificacionModel,
-  getNotificacionesByTutor,
+  getNotificacionesByTutor as getNotificacionesByTutorModel,
   marcarComoLeida
 } from '../models/NotificacionModel.js';
 
@@ -39,7 +39,7 @@ export const listNotificaciones = async (req, res) => {
 
 export const getNotificacionesByTutor = async (req, res) => {
   try {
-      const notificaciones = await getNotificacionesByTutor(req.params.tutorId);
+      const notificaciones = await getNotificacionesByTutorModel(req.params.tutorId);
       res.json({ 
           success: true, 
           data: notificaciones || [] 

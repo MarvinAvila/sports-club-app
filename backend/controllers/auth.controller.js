@@ -2,9 +2,10 @@ import { supabaseAdmin } from "../config/supabaseClient.js";
 import { getUserByAuthId, getUserByEmail } from "../models/UsuarioModel.js";
 
 export const loginUser = async (req, res) => {
+  console.log("Login request received:", req.body);
   try {
     const { email, password } = req.body;
-
+    console.log("Login attempt with email:", email);
     // Validación básica
     if (!email || !password) {
       return res.status(400).json({
@@ -25,6 +26,8 @@ export const loginUser = async (req, res) => {
     const usuario =
       (await getUserByAuthId(data.user.id)) ||
       (await getUserByEmail(data.user.email));
+
+    console.log("Usuario encontrado:", usuario); // Para depuración
 
     if (!usuario) {
       throw new Error("Usuario no encontrado en la base de datos");

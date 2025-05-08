@@ -20,19 +20,14 @@ const login = async (email, password) => {
       throw new Error(errorData.error || "Credenciales incorrectas");
     }
 
-    const data = await response.json();
-    console.log("Datos recibidos:", data); // Para depuración
+    const result  = await response.json();
+
+    const { token, rol, id, auth_id, nombre, email: userEmail, telefono } = result.data;
+
+    console.log("Datos recibidos:", result.data); // Para depuración
 
     // Asegúrate que esta estructura coincide con lo que devuelve el backend
-    return {
-      token: data.token,
-      role: data.role,
-      id: data.id,     // Esto debe venir del backend
-      nombre: data.nombre,
-      email: data.email,
-      telefono: data.telefono,
-      auth_id: data.auth_id // Nuevo campo
-    };
+    return result.data;
 
   } catch (error) {
     console.error("Error en la solicitud:", error);

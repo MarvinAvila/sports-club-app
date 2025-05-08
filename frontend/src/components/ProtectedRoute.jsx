@@ -1,15 +1,19 @@
 import React, { useContext } from 'react';
 import { AuthContext } from '../contexts/AuthContextInstance';
-import { Navigate  } from 'react-router-dom';
+import { Navigate, Outlet  } from 'react-router-dom';
 
-const ProtectedRoute = ({ children }) => {
-  const { token } = useContext(AuthContext); // Obtener el token del contexto
+const ProtectedRoute = ({ allowedRoles = [] }) => {
+  const { token, role } = useContext(AuthContext);
 
   if (!token) {
-    return <Navigate  to="/login" />; // Si no está autenticado, redirige al login
+    return <Navigate to="/login" replace />;
   }
 
-  return children; // Si está autenticado, renderiza los hijos
+  if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return <Outlet />;
 };
 
 export default ProtectedRoute;

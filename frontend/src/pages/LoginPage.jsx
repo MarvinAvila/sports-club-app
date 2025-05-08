@@ -13,7 +13,12 @@ const LoginPage = () => {
 
   const onSubmit = async (e) => {
     e.preventDefault();
-    await handleLogin(email, password); // ¡Todo el manejo de auth está aquí!
+    try {
+      await handleLogin(email, password);
+      // La redirección ahora ocurre dentro de handleLogin
+    } catch (error) {
+      console.error("Login error:", error);
+    }
   };
 
   return (

@@ -1,6 +1,24 @@
 // models/tutores_alumnos/TutorAlumnoModel.js
 import { supabaseAdmin } from '../config/supabaseClient.js';
 
+export const addAlumnoToTutor = async (tutorId, alumnoId, relationshipData = {}) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('tutores_alumnos')
+      .insert([{
+        tutor_id: tutorId,
+        alumno_id: alumnoId,
+        ...relationshipData  // Datos adicionales como parentesco, etc.
+      }])
+      .select();
+
+    if (error) throw new Error('Error al asignar alumno al tutor');
+    return data[0];  // Devuelve el registro creado
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 export const createTutorAlumno = async (tutorAlumnoData) => {
   try {
     const { data, error } = await supabaseAdmin

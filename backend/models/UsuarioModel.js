@@ -16,6 +16,7 @@ export const getUserById = async (userId) => {
 };
 
 export const getUserByAuthId = async (authId) => {
+  console.log('Auth ID:', authId); // Para depuración
   try {
     const { data, error } = await supabaseAdmin
       .from('usuarios')
@@ -24,6 +25,7 @@ export const getUserByAuthId = async (authId) => {
       .single();
 
     if (error) throw new Error('Error al obtener el usuario');
+    console.log('User data:', data); // Para depuración
     return data;
   } catch (error) {
     throw new Error(error.message);

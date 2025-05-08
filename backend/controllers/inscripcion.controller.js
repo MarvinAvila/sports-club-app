@@ -3,8 +3,8 @@ import {
   getAllInscripciones,
   createInscripcion as createInscripcionModel,
   getInscripcionesByTutor as getInscripcionesByTutorModel,
-  getInscripcionesByAlumno,
-  getInscripcionesByDeporte,
+  getInscripcionesByAlumno as getInscripcionesByAlumnoModel,
+  getInscripcionesByDeporte as getInscripcionesByDeporteModel,
   updateInscripcion as updateInscripcionModel,
   deleteInscripcion as deleteInscripcionModel
 } from '../models/InscripcionModel.js';
@@ -52,7 +52,7 @@ export const getInscripcionesByTutor = async (req, res) => {
 
 export const getInscripcionesByAlumno = async (req, res) => {
   try {
-      const inscripciones = await getInscripcionesByAlumno(req.params.alumnoId);
+      const inscripciones = await getInscripcionesByAlumnoModel(req.params.alumnoId);
       res.json({ 
           success: true, 
           data: inscripciones || [] 
@@ -64,7 +64,7 @@ export const getInscripcionesByAlumno = async (req, res) => {
 
 export const getInscripcionesByDeporte = async (req, res) => {
   try {
-      const inscripciones = await getInscripcionesByDeporte(req.params.deporteId);
+      const inscripciones = await getInscripcionesByDeporteModel(req.params.deporteId);
       res.json({ 
           success: true, 
           data: inscripciones || [] 
