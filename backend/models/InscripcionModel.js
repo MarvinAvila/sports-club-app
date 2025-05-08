@@ -1,4 +1,3 @@
-// models/InscripcionModel.js
 import { supabaseAdmin } from '../config/supabaseClient.js';
 
 export const getInscripcionById = async (inscripcionId) => {
@@ -26,7 +25,7 @@ export const getAllInscripciones = async () => {
       .from('inscripciones')
       .select(`
         *,
-        alumnos:alumno_id(nombre, apellidos),
+        alumnos:alumno_id(nombre, apellido_paterno, apellido_materno),
         deportes:deporte_id(nombre)
       `);
 
@@ -41,8 +40,11 @@ export const createInscripcion = async (inscripcionData) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('inscripciones')
-      .insert([inscripcionData])
-      .select(); // Retorna el registro creado
+      .insert([{
+        ...inscripcionData,
+        estado: 'pendiente' // Estado por defecto
+      }])
+      .select();
 
     if (error) throw new Error('Error al crear la inscripción');
     return data[0];
@@ -53,11 +55,16 @@ export const createInscripcion = async (inscripcionData) => {
 
 export const updateInscripcion = async (inscripcionId, updateData) => {
   try {
+    // Validar que el estado sea uno de los permitidos
+    if (updateData.estado && !['pendiente', 'activa', 'vencida'].includes(updateData.estado)) {
+      throw new Error('Estado de inscripción no válido');
+    }
+
     const { data, error } = await supabaseAdmin
       .from('inscripciones')
       .update(updateData)
       .eq('id', inscripcionId)
-      .select(); // Retorna el registro actualizado
+      .select();
 
     if (error) throw new Error('Error al actualizar la inscripción');
     return data[0];
@@ -82,7 +89,7 @@ export const deleteInscripcion = async (inscripcionId) => {
 
 export const getInscripcionesByTutor = async (tutorId) => {
   try {
-    // 1. Obtener alumnos del tutor
+    // Obtener alumnos del tutor
     const { data: tutorAlumnos, error: taError } = await supabaseAdmin
       .from('tutores_alumnos')
       .select('alumno_id')
@@ -93,7 +100,7 @@ export const getInscripcionesByTutor = async (tutorId) => {
     const alumnoIds = tutorAlumnos.map(ta => ta.alumno_id);
     if (alumnoIds.length === 0) return [];
     
-    // 2. Obtener inscripciones con datos relacionados
+    // Obtener inscripciones con datos relacionados
     const { data: inscripciones, error: insError } = await supabaseAdmin
       .from('inscripciones')
       .select(`
@@ -102,7 +109,7 @@ export const getInscripcionesByTutor = async (tutorId) => {
         temporada,
         fecha_inscripcion,
         comprobante_pago_url,
-        alumnos:alumno_id(nombre, apellido_paterno,apellido_materno , foto_url),
+        alumnos:alumno_id(nombre, apellido_paterno, apellido_materno, foto_url),
         deportes:deporte_id(nombre, precio_inscripcion)
       `)
       .in('alumno_id', alumnoIds)
@@ -116,7 +123,6 @@ export const getInscripcionesByTutor = async (tutorId) => {
   }
 };
 
-// Para obtener inscripciones por alumno
 export const getInscripcionesByAlumno = async (alumnoId) => {
   try {
     const { data, error } = await supabaseAdmin
@@ -134,7 +140,6 @@ export const getInscripcionesByAlumno = async (alumnoId) => {
   }
 };
 
-// Para obtener inscripciones por deporte
 export const getInscripcionesByDeporte = async (deporteId) => {
   try {
     const { data, error } = await supabaseAdmin

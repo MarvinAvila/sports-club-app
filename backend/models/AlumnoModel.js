@@ -70,3 +70,32 @@ export const deleteAlumno = async (alumnoId) => {
     throw new Error(error.message);
   }
 };
+
+// Nuevos métodos para documentos del alumno
+export const getDocumentosAlumno = async (alumnoId) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('documentos_alumno')
+      .select('*')
+      .eq('alumno_id', alumnoId);
+
+    if (error) throw new Error('Error al obtener documentos del alumno');
+    return data;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+export const addDocumentoAlumno = async (documentoData) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('documentos_alumno')
+      .insert([documentoData])
+      .select();
+
+    if (error) throw new Error('Error al agregar documento');
+    return data[0];
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};

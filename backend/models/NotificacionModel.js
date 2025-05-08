@@ -1,4 +1,3 @@
-// models/NotificacionModel.js
 import { supabaseAdmin } from '../config/supabaseClient.js';
 
 export const getNotificacionById = async (notificacionId) => {
@@ -7,7 +6,7 @@ export const getNotificacionById = async (notificacionId) => {
       .from('notificaciones')
       .select(`
         *,
-        usuarios:usuario_id(nombre, email)
+        tutores:tutor_id(nombre, apellido_paterno, apellido_materno, email)
       `)
       .eq('id', notificacionId)
       .single();
@@ -25,9 +24,9 @@ export const getAllNotificaciones = async () => {
       .from('notificaciones')
       .select(`
         *,
-        usuarios:usuario_id(nombre)
+        tutores:tutor_id(nombre, apellido_paterno)
       `)
-      .order('fecha_creacion', { ascending: false });
+      .order('creada_en', { ascending: false });
 
     if (error) throw new Error('Error al obtener las notificaciones');
     return data;
@@ -38,10 +37,19 @@ export const getAllNotificaciones = async () => {
 
 export const createNotificacion = async (notificacionData) => {
   try {
+    // Validar tipo de notificación
+    if (!['pago', 'recordatorio', 'general'].includes(notificacionData.tipo)) {
+      throw new Error('Tipo de notificación no válido');
+    }
+
     const { data, error } = await supabaseAdmin
       .from('notificaciones')
-      .insert([notificacionData])
-      .select(); // Retorna el registro creado
+      .insert([{
+        ...notificacionData,
+        leida: false,
+        creada_en: new Date()
+      }])
+      .select();
 
     if (error) throw new Error('Error al crear la notificación');
     return data[0];
@@ -56,7 +64,7 @@ export const updateNotificacion = async (notificacionId, updateData) => {
       .from('notificaciones')
       .update(updateData)
       .eq('id', notificacionId)
-      .select(); // Retorna el registro actualizado
+      .select();
 
     if (error) throw new Error('Error al actualizar la notificación');
     return data[0];
@@ -79,16 +87,15 @@ export const deleteNotificacion = async (notificacionId) => {
   }
 };
 
-// Funciones adicionales útiles
-export const getNotificacionesByUsuario = async (usuarioId) => {
+export const getNotificacionesByTutor = async (tutorId) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('notificaciones')
       .select('*')
-      .eq('usuario_id', usuarioId)
-      .order('fecha_creacion', { ascending: false });
+      .eq('tutor_id', tutorId)
+      .order('creada_en', { ascending: false });
 
-    if (error) throw new Error('Error al obtener notificaciones del usuario');
+    if (error) throw new Error('Error al obtener notificaciones del tutor');
     return data;
   } catch (error) {
     throw new Error(error.message);
@@ -99,7 +106,10 @@ export const marcarComoLeida = async (notificacionId) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('notificaciones')
-      .update({ leida: true, fecha_lectura: new Date() })
+      .update({ 
+        leida: true, 
+        fecha_lectura: new Date() 
+      })
       .eq('id', notificacionId)
       .select();
 

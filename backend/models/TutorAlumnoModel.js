@@ -1,59 +1,30 @@
 // models/tutores_alumnos/TutorAlumnoModel.js
 import { supabaseAdmin } from '../config/supabaseClient.js';
-export const getTutorAlumnoById = async (tutorAlumnoId) => {
-  try {
-    const { data, error } = await supabaseAdmin
-      .from('tutores_alumnos')
-      .select('*')
-      .eq('id', tutorAlumnoId)
-      .single();
-
-    if (error) throw new Error('Error al obtener tutor-alumno');
-    return data;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
-
-export const getAllTutoresAlumnos = async () => {
-  try {
-    const { data, error } = await supabaseAdmin
-      .from('tutores_alumnos')
-      .select('*');
-
-    if (error) throw new Error('Error al obtener tutores-alumnos');
-    return data;
-  } catch (error) {
-    throw new Error(error.message);
-  }
-};
 
 export const createTutorAlumno = async (tutorAlumnoData) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('tutores_alumnos')
-      .insert([tutorAlumnoData]);
+      .insert([tutorAlumnoData])
+      .select();
 
-    if (error) throw new Error('Error al crear tutor-alumno');
-    return data;
+    if (error) throw new Error('Error al crear relación tutor-alumno');
+    return data[0];
   } catch (error) {
     throw new Error(error.message);
   }
 };
 
-export const addAlumnoToTutor = async (tutorId, alumnoId, relationshipData = {}) => {
+export const deleteTutorAlumno = async (tutorId, alumnoId) => {
   try {
     const { data, error } = await supabaseAdmin
       .from('tutores_alumnos')
-      .insert([{
-        tutor_id: tutorId,
-        alumno_id: alumnoId,
-        ...relationshipData  // Datos adicionales como parentesco, etc.
-      }])
-      .select();
+      .delete()
+      .eq('tutor_id', tutorId)
+      .eq('alumno_id', alumnoId);
 
-    if (error) throw new Error('Error al asignar alumno al tutor');
-    return data[0];  // Devuelve el registro creado
+    if (error) throw new Error('Error al eliminar relación tutor-alumno');
+    return data;
   } catch (error) {
     throw new Error(error.message);
   }
@@ -64,20 +35,39 @@ export const getAlumnosByTutor = async (tutorId) => {
     const { data, error } = await supabaseAdmin
       .from('tutores_alumnos')
       .select(`
-        id,
-        alumno_id,
-        alumnos:alumno_id (*)  // Esto trae todos los datos del alumno
+        parentesco,
+        alumnos:alumno_id(*)
       `)
       .eq('tutor_id', tutorId);
 
     if (error) throw new Error('Error al obtener alumnos del tutor');
     
-    // Formateamos la respuesta para devolver objetos alumno más limpios
-    return data.map(relacion => ({
-      relacion_id: relacion.id,
-      ...relacion.alumnos
+    // Formatear la respuesta para incluir el parentesco
+    return data.map(item => ({
+      ...item.alumnos,
+      parentesco: item.parentesco
     }));
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
+export const getTutoresByAlumno = async (alumnoId) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('tutores_alumnos')
+      .select(`
+        parentesco,
+        tutores:tutor_id(*)
+      `)
+      .eq('alumno_id', alumnoId);
+
+    if (error) throw new Error('Error al obtener tutores del alumno');
     
+    return data.map(item => ({
+      ...item.tutores,
+      parentesco: item.parentesco
+    }));
   } catch (error) {
     throw new Error(error.message);
   }

@@ -18,6 +18,6 @@ router.get('/:id', checkRole(['admin', 'tutor']), getPago);
 router.post('/', checkRole(['admin', 'tutor']), createPago);
 router.put('/:id', checkRole(['admin']), updatePago);
 router.delete('/:id', checkRole(['admin']), deletePago);
-router.get('/inscripcion/:id', checkRole(['admin', 'tutor']), getPagosByInscripcion);
+router.get('/inscripcion/:inscripcionId', checkRole(['admin', 'tutor']), getPagosByInscripcion);
 
 export default router;
