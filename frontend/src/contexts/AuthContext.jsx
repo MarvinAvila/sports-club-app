@@ -61,11 +61,46 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const register = async (userData) => {
+    try {
+      // 1. Registrar al usuario
+      const registeredUser = await authApi.registerUser(userData);
+      
+      // 2. Iniciar sesión automáticamente
+      const authData = await authApi.login(userData.email, userData.password);
+      
+      // 3. Actualizar estado
+      const newAuthState = {
+        token: authData.token,
+        role: authData.role,
+        user: {
+          id: authData.id,
+          auth_id: authData.auth_id,
+          name: authData.nombre || userData.nombre,
+          email: authData.email,
+          phone: authData.telefono || userData.telefono
+        },
+        isAuthenticated: true,
+      };
+      
+      setAuthState(newAuthState);
+      localStorage.setItem('auth', JSON.stringify(newAuthState));
+      
+      // 4. Redirigir
+      navigate(getRedirectPath(authData.role));
+      
+      return registeredUser;
+    } catch (error) {
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       ...authState, // Incluye token, role, user e isAuthenticated
       login,
-      logout
+      logout,
+      register 
     }}>
       {children}
     </AuthContext.Provider>

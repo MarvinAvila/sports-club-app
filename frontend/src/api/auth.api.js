@@ -62,7 +62,36 @@ export const fetchUserRole = async (token) => {
   }
 };
 
+// auth.api.js
+export const registerUser = async (userData) => {
+  try {
+    const response = await fetch(`${BASE_URL}/api/auth/register`, {
+      method: "POST",
+      mode: "cors",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Error en el registro");
+    }
+
+    const data = await response.json();
+    return data; // Devuelve los datos del usuario registrado
+
+  } catch (error) {
+    console.error("Error en el registro:", error);
+    throw new Error(error.message || "Error al conectar con el servidor");
+  }
+};
+
+// Añade al objeto exportado
 export const authApi = {
   login,
-  fetchUserRole, // Exporta la función para obtener el rol del usuario
+  fetchUserRole,
+  registerUser,
 };
