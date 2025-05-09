@@ -31,6 +31,7 @@
     │   ├── MessagingCenter.jsx
     │   ├── DocumentUploader.jsx
     |   ├── ProfileDropdown.jsx
+    │   ├── RegisterPage.jsx
     │   └── ProtectedRoute.jsx
     ├─── 📂 constants/          # Nueva carpeta
     │       └── roles.js          # Define ROLES 
@@ -64,6 +65,7 @@
     │   └── user-dashboard.css
     ├── 📂 utils/             
     │   ├── auth.js           # Contiene helpers de autenticación
+    │   ├── curpValidator.js          
     │   ├── api.js      
     │   └── export.js
     ├── App.jsx               # Componente principal

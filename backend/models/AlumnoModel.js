@@ -30,6 +30,7 @@ export const getAllAlumnos = async () => {
 };
 
 export const createAlumno = async (alumnoData) => {
+  console.log("Datos del alumno a crear:", alumnoData); // Para depuración
   try {
     const { data, error } = await supabaseAdmin
       .from('alumnos')

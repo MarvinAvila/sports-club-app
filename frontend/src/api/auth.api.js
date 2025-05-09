@@ -58,30 +58,45 @@ export const fetchUserRole = async (token) => {
 };
 
 // auth.api.js
-export const registerUser = async (userData) => {
-  try {
-    const response = await fetch(`${BASE_URL}/api/auth/register`, {
-      method: "POST",
-      mode: "cors",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(userData),
+export const registerUser = (formData, onProgress) => {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.open('POST', `${BASE_URL}/api/auth/register`);
+    xhr.withCredentials = true; // Equivalente a credentials: "include"
+
+    // Configurar el evento de progreso
+    xhr.upload.addEventListener('progress', (event) => {
+      if (event.lengthComputable && onProgress) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        onProgress(percent);
+      }
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Error en el registro");
-    }
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const response = JSON.parse(xhr.responseText);
+          resolve(response);
+        } catch (error) {
+          reject(new Error('Error al parsear la respuesta'));
+        }
+      } else {
+        try {
+          const errorData = JSON.parse(xhr.responseText);
+          reject(new Error(errorData.error || 'Error en el registro'));
+        } catch {
+          reject(new Error(`Error ${xhr.status}: ${xhr.statusText}`));
+        }
+      }
+    };
 
-    const data = await response.json();
-    return data; // Devuelve los datos del usuario registrado
+    xhr.onerror = () => {
+      reject(new Error('Error de conexión'));
+    };
 
-  } catch (error) {
-    console.error("Error en el registro:", error);
-    throw new Error(error.message || "Error al conectar con el servidor");
-  }
+    xhr.send(formData);
+  });
 };
 
 // Añade al objeto exportado

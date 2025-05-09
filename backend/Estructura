@@ -11,6 +11,7 @@
 │   └── tutor.controller.js     # Controlador de tutores
 ├── 📂 middlewares
 │   ├── auth.middleware.js      # Middleware de autenticación
+│   ├── multer.middleware.js    # Middleware de subida de archivos
 │   └── error.middleware.js     # Middleware de manejo de errores
 ├── 📂 routes
 │   ├── auth.routes.js          # Rutas de autenticación
@@ -27,6 +28,7 @@
 │   ├── NotificacionModel.js    # Modelo para la tabla "notificaciones"
 │   ├── PagoModel.js            # Modelo para la tabla "pagos"
 │   ├── TutorAlumnoModel.js     # Modelo para la tabla "tutores_alumnos"
+│   ├── TutorModel.js           # Modelo para la tabla "tutores"
 │   └── UsuarioModel.js         # Modelo para la tabla "usuarios"
 ├── 📂 utils
 │   ├── logger.js               # Utilidades de logging

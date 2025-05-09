@@ -10,6 +10,7 @@ import deporteRoutes from './routes/deporte.routes.js';
 import inscripcionRoutes from './routes/inscripcion.routes.js';
 import pagoRoutes from './routes/pago.routes.js';
 import notificacionRoutes from './routes/notificacion.routes.js';
+import { handleEmailConfirmed } from './controllers/webhooks.controller.js';
 
 
 dotenv.config();
@@ -26,7 +27,8 @@ const corsOptions = {
 // Middlewares
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions)); // Manejo de preflight
-app.use(express.json());
+app.use(express.json()); // Para application/json
+app.use(express.urlencoded({ extended: true })); // Para form-urlencoded
 
 // Rutas base
 app.use('/api/auth', authRoutes);
@@ -42,9 +44,31 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK' });
 });
 
+
+app.post('/api/webhooks/email-confirmed', 
+  express.json({ type: 'application/json' }), 
+  handleEmailConfirmed
+);
+
 // Manejo de errores centralizado
 app.use((err, req, res, next) => {
   console.error(err.stack);
+  
+  // Manejo específico para errores de Multer
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({
+      error: 'Archivo demasiado grande',
+      message: 'El tamaño máximo permitido es 5MB'
+    });
+  }
+  
+  if (err.message.includes('Tipo de archivo no permitido')) {
+    return res.status(415).json({
+      error: 'Tipo de archivo no soportado',
+      message: 'Solo se permiten JPEG, PNG y PDF'
+    });
+  }
+
   res.status(500).json({ 
     error: 'Error interno del servidor',
     message: err.message 
