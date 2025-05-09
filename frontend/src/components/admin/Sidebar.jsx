@@ -1,6 +1,9 @@
 // src/components/admin/Sidebar.jsx
 
 import React from 'react';
+import { Link } from "react-router-dom";
+
+
 import { FiUsers, FiCalendar, FiUpload, FiLogOut, FiFileText } from "react-icons/fi";
 
 const Sidebar = () => {
@@ -10,22 +13,25 @@ const Sidebar = () => {
         <h2 className="text-2xl font-bold mb-8 text-white">Admin</h2>
 
         <nav className="space-y-4">
-          <a href="#" className="flex items-center space-x-2 hover:text-blue-400">
+           <Link to="/admin/alumnos" className="flex items-center space-x-2 hover:text-blue-400 text-white">
             <FiUsers />
             <span>Alumnos</span>
-          </a>
-          <a href="#" className="flex items-center space-x-2 hover:text-blue-400">
-            <FiCalendar />
+          </Link>
+
+          <Link to="/admin/calendario" className="flex items-center space-x-2 hover:text-blue-400 text-white">
+            <span>📅</span>
             <span>Calendario</span>
-          </a>
+          </Link>
+           {/* 
           <a href="#" className="flex items-center space-x-2 hover:text-blue-400">
             <FiUpload />
             <span>Subir Documentos</span>
           </a>
-          <a href="#" className="flex items-center space-x-2 hover:text-blue-400">
-            <FiFileText />
+          */}
+          <Link to="/admin/historial" className="flex items-center space-x-2 hover:text-blue-400 text-white">
+            <span>📜</span>
             <span>Historial</span>
-          </a>
+          </Link>
         </nav>
       </div>
     </div>

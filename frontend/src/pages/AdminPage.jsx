@@ -212,7 +212,7 @@ const AdminPage = () => {
                     }}
                   />
                 </div>
-              </div>
+              </div> 
 
               <div className="bg-gray-700 rounded-xl shadow-lg overflow-hidden">
                 <div className="p-6 border-b border-gray-600">
