@@ -29,6 +29,7 @@ export const getAllTutores = async () => {
 };
 
 export const createTutor = async (tutorData) => {
+  console.log(" createTutor: Datos del tutor a crear:", tutorData);
   try {
     const { data, error } = await supabaseAdmin
       .from('tutores')

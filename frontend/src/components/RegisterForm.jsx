@@ -2,11 +2,17 @@ import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { authApi } from "../api/auth.api";
 import { AuthContext } from "../contexts/AuthContextInstance";
-import DocumentUploader from "./DocumentUploader";
+import { validateCURP, parseCURP } from "../utils/curpValidator";
+import Step1PersonalInfo from "./Step1PersonalInfo";
+import Step2MedicalInfo from "./Step2MedicalInfo";
+import Step3TutorInfo from "./Step3TutorInfo";
+import Step4Documents from "./Step4Documents";
+import Modal from "../components/ui/Modal";
 
 const RegisterForm = () => {
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    // Datos personales
     apellidoPaterno: "",
     apellidoMaterno: "",
     nombre: "",
@@ -22,8 +28,12 @@ const RegisterForm = () => {
     alergias: "",
     cirugias: "",
     afecciones: "",
-    nombrePadres: "",
+    nombreTutor: "",
+    apellidoPaternoTutor: "",
+    apellidoMaternoTutor: "",
+    emailTutor: "",
     telefonosContacto: "",
+    parentesco: "",
     password: "",
   });
 
@@ -40,10 +50,45 @@ const RegisterForm = () => {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const nextStep = () => setStep((prev) => prev + 1);
+  const prevStep = () => setStep((prev) => prev - 1);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const handleModalClose = () => {
+    setShowSuccessModal(false);
+    navigate("/login");
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+    if (name === "curp") {
+      const upperValue = value.toUpperCase();
+      setFormData((prev) => ({ ...prev, [name]: upperValue }));
+      if (upperValue.length === 18) {
+        const validation = validateCURP(upperValue);
+        if (!validation.isValid) {
+          setErrors((prev) => ({ ...prev, curp: validation.error }));
+        } else {
+          try {
+            const curpData = parseCURP(upperValue);
+            setFormData((prev) => ({
+              ...prev,
+              fechaNacimiento: curpData.fechaNacimiento
+                .toISOString()
+                .split("T")[0],
+            }));
+            setErrors((prev) => ({ ...prev, curp: "" }));
+          } catch (error) {
+            setErrors((prev) => ({ ...prev, curp: error.message }));
+          }
+        }
+      } else {
+        setErrors((prev) => ({ ...prev, curp: "" }));
+      }
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleFileUpload = (fileType, file) => {
@@ -51,41 +96,79 @@ const RegisterForm = () => {
     if (errors[fileType]) setErrors((prev) => ({ ...prev, [fileType]: "" }));
   };
 
-  const validateForm = () => {
+  const validateStep = (step) => {
     const newErrors = {};
-    const requiredFields = [
-      "apellidoPaterno",
-      "apellidoMaterno",
-      "nombre",
-      "curp",
-      "fechaNacimiento",
-      "tipoSangre",
-      "email",
-      "lugarNacimiento",
-      "nivelEstudios",
-      "municipioResidencia",
-      "codigoPostal",
-      "numeroCamiseta",
-      "nombrePadres",
-      "telefonosContacto",
-      "password",
-    ];
+    if (step === 1) {
+      const fields = [
+        "apellidoPaterno",
+        "apellidoMaterno",
+        "nombre",
+        "curp",
+        "fechaNacimiento",
+        "tipoSangre",
+        "lugarNacimiento",
+        "nivelEstudios",
+        "municipioResidencia",
+        "codigoPostal",
+        "numeroCamiseta",
+      ];
+      fields.forEach((f) => {
+        if (!formData[f]) newErrors[f] = "Este campo es requerido";
+      });
+      if (formData.curp) {
+        const validation = validateCURP(formData.curp);
+        if (!validation.isValid) {
+          newErrors.curp = validation.error;
+        } else if (formData.fechaNacimiento) {
+          const curpDate = parseCURP(formData.curp).fechaNacimiento;
+          const formDate = new Date(formData.fechaNacimiento);
+          if (
+            curpDate.toISOString().split("T")[0] !==
+            formDate.toISOString().split("T")[0]
+          ) {
+            newErrors.curp = "La fecha no coincide con la CURP";
+            newErrors.fechaNacimiento = "No coincide con la CURP";
+          }
+        }
+      }
+      if (
+        formData.email &&
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
+      ) {
+        newErrors.email = "Email no válido";
+      }
+    }
 
-    requiredFields.forEach((field) => {
-      if (!formData[field]) newErrors[field] = "Este campo es requerido";
-    });
+    if (step === 3) {
+      const fields = [
+        "nombreTutor",
+        "apellidoPaternoTutor",
+        "apellidoMaternoTutor",
+        "emailTutor",
+        "password",
+        "telefonosContacto",
+        "parentesco",
+      ];
+      fields.forEach((f) => {
+        if (!formData[f]) newErrors[f] = "Este campo es requerido";
+      });
+    }
 
-    const requiredFiles = [
-      "curpFile",
-      "actaNacimientoFile",
-      "credencialEscolarFile",
-      "ineTutorFile",
-      "fotoJugadorFile",
-    ];
-
-    requiredFiles.forEach((file) => {
-      if (!files[file]) newErrors[file] = "Este documento es requerido";
-    });
+    if (step === 4) {
+      const fileFields = [
+        "curpFile",
+        "actaNacimientoFile",
+        "credencialEscolarFile",
+        "ineTutorFile",
+        "fotoJugadorFile",
+      ];
+      fileFields.forEach((f) => {
+        if (!files[f]) newErrors[f] = "Este documento es requerido";
+      });
+      if (files.fotoJugadorFile && files.fotoJugadorFile.size > 50000) {
+        newErrors.fotoJugadorFile = "La foto no debe exceder 50KB";
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -93,391 +176,236 @@ const RegisterForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    if (!validateStep(4)) return;
 
     setIsLoading(true);
-    try {
-      // Crear FormData para enviar archivos
-      const formDataToSend = new FormData();
 
-      // Agregar campos del formulario
-      Object.entries(formData).forEach(([key, value]) => {
-        formDataToSend.append(key, value);
-      });
+    // Simulamos un tiempo de procesamiento (opcional)
+    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Agregar archivos
-      Object.entries(files).forEach(([key, file]) => {
-        if (file) formDataToSend.append(key, file);
-      });
+    // Mostrar modal de éxito
+    setShowSuccessModal(true);
 
-      // Registrar usuario
-      const userData = await authApi.registerUser(formDataToSend);
+    // Redirigir después de 3 segundos
+    setTimeout(() => {
+      navigate("/login");
+    }, 3000);
 
-      // Iniciar sesión automáticamente
-      const authData = await authApi.login(formData.email, formData.password);
-
-      // Guardar en contexto y redirigir
-      login(authData.token, authData.role, {
-        id: authData.id,
-        auth_id: authData.auth_id,
-        nombre: `${formData.nombre} ${formData.apellidoPaterno}`,
-        email: authData.email,
-        telefono: formData.telefonosContacto,
-      });
-
-      navigate("/dashboard");
-    } catch (err) {
-      setError(err.message || "Error en el registro");
-    } finally {
-      setIsLoading(false);
-    }
+    setIsLoading(false);
   };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Sección de Datos Personales */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4 border-b pb-2">
-          Datos Personales
-        </h2>
+    <>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-[rgb(var(--card))] text-[rgb(var(--card-foreground))] shadow-xl rounded-2xl p-6 md:p-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-center mb-6 text-blue-600 dark:text-blue-400">
+            Registro de Nuevo Jugador
+          </h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Apellido Paterno */}
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Apellido Paterno *
-            </label>
-            <input
-              name="apellidoPaterno"
-              type="text"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))]"
-              value={formData.apellidoPaterno}
-              onChange={handleChange}
-            />
-            {errors.apellidoPaterno && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.apellidoPaterno}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Apellido Materno *
-            </label>
-            <input
-              name="apellidoMaterno"
-              type="text"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))]"
-              value={formData.apellidoMaterno}
-              onChange={handleChange}
-            />
-            {errors.apellidoMaterno && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.apellidoPaterno}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Nombre(s) *
-            </label>
-            <input
-              name="Nombre"
-              type="text"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))]"
-              value={formData.nombre}
-              onChange={handleChange}
-            />
-            {errors.nombre && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.nombre}
-              </p>
-            )}
+          {/* Indicador de pasos */}
+          <div className="flex justify-between items-center mb-10 relative">
+            <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 dark:bg-gray-700 transform -translate-y-1/2 -z-10"></div>
+            {[1, 2, 3, 4].map((stepNumber) => (
+              <div
+                key={stepNumber}
+                className="flex flex-col items-center relative z-10"
+              >
+                <div
+                  className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 border-4
+                  ${
+                    step === stepNumber
+                      ? "border-blue-500 bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-200"
+                      : step > stepNumber
+                      ? "border-green-500 bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-200"
+                      : "border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+                  }`}
+                >
+                  <span className="font-bold text-lg">{stepNumber}</span>
+                </div>
+                <span
+                  className={`text-xs mt-2 text-center w-24 font-medium ${
+                    step === stepNumber
+                      ? "text-blue-600 dark:text-blue-300"
+                      : step > stepNumber
+                      ? "text-green-600 dark:text-green-300"
+                      : "text-gray-500 dark:text-gray-400"
+                  }`}
+                >
+                  {stepNumber === 1 && "Datos Personales"}
+                  {stepNumber === 2 && "Información Médica"}
+                  {stepNumber === 3 && "Datos del Tutor"}
+                  {stepNumber === 4 && "Documentos"}
+                </span>
+              </div>
+            ))}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Clave CURP *
-            </label>
-            <input
-              name="CURP"
-              type="text"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))]"
-              value={formData.curp}
-              onChange={handleChange}
-            />
-            {errors.curp && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.curp}
-              </p>
-            )}
-          </div>
+          {errors.submit && (
+            <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 px-4 py-3 rounded-md border border-red-200 dark:border-red-800 mb-6 text-sm">
+              {errors.submit}
+            </div>
+          )}
 
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Fecha de Nacimiento *
-            </label>
-            <input
-              name="FechaNacimiento"
-              type="text"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))]"
-              value={formData.fechaNacimiento}
-              onChange={handleChange}
-            />
-            {errors.fechaNacimiento && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.fechaNacimiento}
-              </p>
-            )}
-          </div>
+          {/* Barra de progreso de carga */}
+          {isLoading && (
+            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-6">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full"
+                style={{ width: `${uploadProgress}%` }}
+              ></div>
+            </div>
+          )}
 
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Tipo de Sangre *
-            </label>
-            <input
-              name="TipoSangre"
-              type="text"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))]"
-              value={formData.tipoSangre}
-              onChange={handleChange}
-            />
-            {errors.tipoSangre && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.tipoSangre}
-              </p>
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {step === 1 && (
+              <Step1PersonalInfo
+                formData={formData}
+                errors={errors}
+                handleChange={handleChange}
+              />
             )}
-          </div>
+            {step === 2 && (
+              <Step2MedicalInfo
+                formData={formData}
+                errors={errors}
+                handleChange={handleChange}
+              />
+            )}
+            {step === 3 && (
+              <Step3TutorInfo
+                formData={formData}
+                errors={errors}
+                handleChange={handleChange}
+              />
+            )}
+            {step === 4 && (
+              <Step4Documents
+                files={files}
+                errors={errors}
+                handleFileUpload={handleFileUpload}
+              />
+            )}
 
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Correo Electronico *
-            </label>
-            <input
-              name="CorreoElectronico"
-              type="text"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))]"
-              value={formData.email}
-              onChange={handleChange}
-            />
-            {errors.email && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.email}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Lugar de Nacimiento *
-            </label>
-            <input
-              name="LugarNacimiento"
-              type="text"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))]"
-              value={formData.lugarNacimiento}
-              onChange={handleChange}
-            />
-            {errors.lugarNacimiento && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.lugarNacimiento}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Nivel de Estudios *
-            </label>
-            <input
-              name="NivelEstudios"
-              type="text"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))]"
-              value={formData.nivelEstudios}
-              onChange={handleChange}
-            />
-            {errors.nivelEstudios && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.nivelEstudios}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Muncipio de Residencia *
-            </label>
-            <input
-              name="MunicipioResidencia"
-              type="text"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))]"
-              value={formData.municipioResidencia}
-              onChange={handleChange}
-            />
-            {errors.municipioResidencia && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.municipioResidencia}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Codigo Postal*
-            </label>
-            <input
-              name="codigoPostal"
-              type="text"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))]"
-              value={formData.codigoPostal}
-              onChange={handleChange}
-            />
-            {errors.codigoPostal && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.codigoPostal}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              Número de camiseta *
-            </label>
-            <input
-              name="NumeroCamiseta"
-              type="text"
-              className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))]"
-              value={formData.numeroCamiseta}
-              onChange={handleChange}
-            />
-            {errors.numeroCamiseta && (
-              <p className="text-red-500 text-xs mt-1">
-                {errors.numeroCamiseta}
-              </p>
-            )}
-          </div>
+            <div className="flex justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
+              {step > 1 && (
+                <button
+                  type="button"
+                  onClick={prevStep}
+                  className="flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium py-2 px-6 rounded-lg transition-colors duration-200"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Anterior
+                </button>
+              )}
+              {step < 4 ? (
+                <button
+                  type="button"
+                  onClick={() => validateStep(step) && nextStep()}
+                  className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200 ml-auto"
+                >
+                  Siguiente
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200 ml-auto disabled:opacity-70"
+                >
+                  {isLoading ? (
+                    <>
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-5 w-5 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Registrando...
+                    </>
+                  ) : (
+                    <>
+                      Finalizar
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-5 w-5"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </form>
         </div>
-      </section>
-
-      {/* Sección de Información Médica */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4 border-b pb-2">
-          Información Médica
-        </h2>
-
-        {/* Alergias */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Alergias (si aplica)
-          </label>
-          <textarea
-            name="alergias"
-            className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))] min-h-[80px]"
-            value={formData.alergias}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Cirugias Previas (si aplica)
-          </label>
-          <textarea
-            name="cirugias"
-            className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))] min-h-[80px]"
-            value={formData.cirugias}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-sm font-medium mb-1">
-            Affecciones Médicas (si aplica)
-          </label>
-          <textarea
-            name="afecciones"
-            className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))] min-h-[80px]"
-            value={formData.afecciones}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Documentacion De el tutor */}
-      </section>
-
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-1">
-          Nombre de los padres o tutores
-        </label>
-        <textarea
-          name="NomebrePadres"
-          className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))] min-h-[80px]"
-          value={formData.nombrePadres}
-          onChange={handleChange}
-        />
       </div>
-
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-1">
-          Teléfonos de contacto
-        </label>
-        <textarea
-          name="telefonosContacto"
-          className="w-full px-3 py-2 rounded-md border border-gray-300 dark:border-gray-600 bg-[rgb(var(--card))] min-h-[80px]"
-          value={formData.telefonosContacto}
-          onChange={handleChange}
-        />
-      </div>
-
-      {/* Sección de Documentos */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4 border-b pb-4">
-          Documentación Requerida
-        </h2>
-
-        <h2 className="text-xl font-semibold mb-4 ">
-          CURP, Acta de nacimiento, Credencial o constancia escolar, INE del tutor
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DocumentUploader
-            title="Documentacion "
-            description="Sube tu documento en formato PDF"
-            acceptedFormats=".pdf"
-            onFileUpload={(file) => handleFileUpload("curpFile", file)}
-            error={errors.curpFile}
-          />
+      <Modal isOpen={showSuccessModal} onClose={() => navigate("/login")}>
+        <div className="text-center p-6">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
+            <svg
+              className="h-6 w-6 text-green-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M5 13l4 4L19 7"
+              />
+            </svg>
+          </div>
+          <h3 className="mt-3 text-lg font-medium text-gray-900">
+            ¡Registro exitoso!
+          </h3>
+          <div className="mt-2 text-sm text-gray-500">
+            <p>Serás redirigido automáticamente al login...</p>
+          </div>
         </div>
-      </section>
-
-      {/* Sección de Documentos */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4 border-b pb-2">
-          Foto del jugador en formato JPEG (no mayor a 50 KB).
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <DocumentUploader
-            title="Foto del jugador en formato JPEG "
-            description="(no mayor a 50 KB)"
-            acceptedFormats=".pdf"
-            onFileUpload={(file) => handleFileUpload("curpFile", file)}
-            error={errors.curpFile}
-          />
-
-          {/* Resto de DocumentUploaders... */}
-        </div>
-      </section>
-
-      <button
-        type="submit"
-        className="btn btn-primary w-full mt-6"
-        disabled={isLoading}
-      >
-        {isLoading ? "Registrando..." : "Registrarse"}
-      </button>
-    </form>
+      </Modal>
+    </>
   );
 };
 
