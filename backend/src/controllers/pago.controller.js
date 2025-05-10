@@ -7,6 +7,8 @@ import {
   getPagosByInscripcion as getPagosByInscripcionModel
 } from '../models/PagoModel.js';
 
+import QRCode from 'qrcode';
+
 const handleError = (res, error, status = 500) => {
   console.error(error);
   res.status(status).json({ 
@@ -83,5 +85,40 @@ export const deletePago = async (req, res) => {
       res.json({ success: true, message: 'Pago eliminado correctamente' });
   } catch (error) {
       handleError(res, error);
+  }
+};
+
+
+export const generarQRPago = async (req, res) => {
+  try {
+    const { alumnoId } = req.params;
+    
+    // 1. Verificar que el alumno existe y pertenece al tutor
+    const alumno = await getAlumnoById(alumnoId);
+    if (!alumno) {
+      return handleError(res, new Error('Alumno no encontrado'), 404);
+    }
+
+    // 2. Generar URL única para el pago
+    const paymentUrl = `${process.env.FRONTEND_URL}/pagar/${alumnoId}`;
+    
+    // 3. Generar QR como SVG
+    const qrSvg = await QRCode.toString(paymentUrl, { type: 'svg' });
+    
+    // 4. Opcional: Guardar en base de datos si es necesario
+    // await saveQRData(alumnoId, qrSvg);
+    
+    res.json({ 
+      success: true,
+      qrCode: qrSvg,
+      paymentUrl: paymentUrl,
+      alumno: {
+        id: alumno.id,
+        nombre: alumno.nombre,
+        apellido: alumno.apellido_paterno
+      }
+    });
+  } catch (error) {
+    handleError(res, error);
   }
 };

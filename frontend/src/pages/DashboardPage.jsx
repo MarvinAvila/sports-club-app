@@ -12,6 +12,9 @@ export default function DashboardPage() {
   const [alumnos, setAlumnos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedAlumno, setSelectedAlumno] = useState(null);
+  const [qrData, setQrData] = useState(null);
+  const [loadingQR, setLoadingQR] = useState(false);
 
   if (!user) {
     return (
@@ -45,14 +48,22 @@ export default function DashboardPage() {
         setLoading(true);
         setError(null);
         console.log("Fetching alumnos del tutor...");
-        const alumnosData = await getAlumnosByTutor(user.id);
-        console.log("Alumnos recibidos:", alumnosData);
-        setAlumnos(alumnosData);
+        const response = await getAlumnosByTutor(user.id);
+        console.log("Alumnos recibidos:", response);
+
+        // Asegúrate de acceder a la propiedad correcta de la respuesta
+        setAlumnos(response.data || response);
       } catch (err) {
         console.error("Error completo:", err);
-        setError(err.message);
+
+        // Mostrar mensaje de error más amigable
+        if (err.message.includes("Sesión expirada")) {
+          logout(); // Llama a tu función de logout
+          navigate("/login");
+        } else {
+          setError(err.message || "Error al cargar los alumnos");
+        }
       } finally {
-        console.log("Finalizando carga");
         setLoading(false);
       }
     };
@@ -63,6 +74,26 @@ export default function DashboardPage() {
       cancelled = true;
     };
   }, [user?.id]);
+
+  // Función para generar QR
+  const handleGenerarQR = async (alumnoId) => {
+    try {
+      setLoadingQR(true);
+      const response = await generarQRPago(alumnoId);
+      setQrData({
+        alumnoId,
+        qrCode: response.qrCode,
+        paymentUrl: response.paymentUrl,
+        nombre: response.alumno.nombre,
+        apellido: response.alumno.apellido,
+      });
+    } catch (error) {
+      console.error("Error al generar QR:", error);
+      setError("Error al generar el código QR");
+    } finally {
+      setLoadingQR(false);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -89,11 +120,89 @@ export default function DashboardPage() {
     );
   }
 
+  // Renderizado de cada alumno
+  const renderAlumnoCard = (alumno) => (
+    <div key={alumno.id} className="bg-gray-700 rounded-xl shadow-lg p-6 mb-6">
+      {/* Encabezado */}
+      <div className="flex justify-between items-start mb-4 pb-2 border-b border-gray-600">
+        <div>
+          <h2 className="text-2xl font-bold text-white">
+            {alumno.nombre} {alumno.apellido_paterno}
+          </h2>
+          {alumno.parentesco && (
+            <p className="text-gray-400">Parentesco: {alumno.parentesco}</p>
+          )}
+        </div>
+        <div className="flex items-center space-x-2">
+          {alumno.foto_url && (
+            <img
+              src={alumno.foto_url}
+              alt={`Foto de ${alumno.nombre}`}
+              className="w-12 h-12 rounded-full object-cover"
+            />
+          )}
+          <button
+            onClick={() => handleGenerarQR(alumno.id)}
+            disabled={loadingQR}
+            className="ml-4 px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm disabled:opacity-50"
+          >
+            {loadingQR && qrData?.alumnoId === alumno.id
+              ? "Generando..."
+              : "Generar QR de Pago"}
+          </button>
+        </div>
+      </div>
+
+      {/* Mostrar QR si corresponde a este alumno */}
+      {qrData?.alumnoId === alumno.id && (
+        <div className="mt-4 p-4 bg-gray-800 rounded-lg">
+          <AlumnoQR
+            alumnoId={qrData.alumnoId}
+            nombre={qrData.nombre}
+            apellido={qrData.apellido}
+            qrCode={qrData.qrCode}
+          />
+        </div>
+      )}
+
+      {/* Información detallada en grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <h3 className="text-gray-400 font-medium">Información Personal</h3>
+          <ul className="mt-2 space-y-1">
+            <li className="text-white">
+              Edad: {alumno.edad || "No especificada"}
+            </li>
+            <li className="text-white">
+              Género: {alumno.genero || "No especificado"}
+            </li>
+            <li className="text-white">
+              CURP: {alumno.curp || "No registrada"}
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h3 className="text-gray-400 font-medium">Información Médica</h3>
+          <ul className="mt-2 space-y-1">
+            <li className="text-white">
+              Tipo de sangre: {alumno.tipo_sangre || "No especificado"}
+            </li>
+            <li className="text-white">
+              Alergias: {alumno.alergias || "Ninguna conocida"}
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex min-h-screen bg-gray-900 text-gray-100 w-full">
       {/* Sidebar Fixed para Tutor */}
       <div className="w-64 bg-gray-800 p-6 flex-shrink-0 border-r border-gray-700 fixed h-full">
-        <h2 className="text-xl font-bold text-blue-400 mb-8">Panel del Tutor</h2>
+        <h2 className="text-xl font-bold text-blue-400 mb-8">
+          Panel del Tutor
+        </h2>
         <nav>
           <ul className="space-y-3">
             <li>
@@ -153,92 +262,9 @@ export default function DashboardPage() {
                 </p>
               </div>
             ) : (
-              <>
-                {alumnos.map((alumno) => (
-                  <div
-                    key={alumno.id}
-                    className="bg-gray-700 rounded-xl shadow-lg p-6 mb-6"
-                  >
-                    {/* Encabezado con información básica */}
-                    <div className="flex justify-between items-start mb-4 pb-2 border-b border-gray-600">
-                      <div>
-                        <h2 className="text-2xl font-bold text-white">
-                          {alumno.nombre} {alumno.apellido_paterno}
-                        </h2>
-                        {alumno.parentesco && (
-                          <p className="text-gray-400">
-                            Parentesco: {alumno.parentesco}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        {alumno.foto_url && (
-                          <img
-                            src={alumno.foto_url}
-                            alt={`Foto de ${alumno.nombre}`}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Información detallada en grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <h3 className="text-gray-400 font-medium">
-                          Información Personal
-                        </h3>
-                        <ul className="mt-2 space-y-1">
-                          <li className="text-white">
-                            Edad: {alumno.edad || "No especificada"}
-                          </li>
-                          <li className="text-white">
-                            Género: {alumno.genero || "No especificado"}
-                          </li>
-                          <li className="text-white">
-                            CURP: {alumno.curp || "No registrada"}
-                          </li>
-                        </ul>
-                      </div>
-                      <div>
-                        <h3 className="text-gray-400 font-medium">
-                          Información Médica
-                        </h3>
-                        <ul className="mt-2 space-y-1">
-                          <li className="text-white">
-                            Tipo de sangre:{" "}
-                            {alumno.tipo_sangre || "No especificado"}
-                          </li>
-                          <li className="text-white">
-                            Alergias: {alumno.alergias || "Ninguna conocida"}
-                          </li>
-                        </ul>
-                      </div>
-                    </div>
-
-                    {/* Historial de pagos */}
-                    <div className="mt-4">
-                      <PaymentHistory alumnoId={alumno.id} />
-                    </div>
-
-                    {/* Documentos */}
-                    <div className="mt-4">
-                      <h3 className="text-lg font-semibold text-white mb-2">
-                        Documentos
-                      </h3>
-                      <DocumentUploader
-                        purpose="alumno_documents"
-                        alumnoId={alumno.id}
-                        onUploadSuccess={() => {
-                          // Puedes implementar una recarga de datos aquí si es necesario
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </>
+              <></>
             )}
-            
+
             {/* Sección de documentos y mensajes */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* Subir comprobante */}
