@@ -11,6 +11,8 @@ import CalendarioPage from "./pages/CalendarioPage";
 import HistorialPage from "./pages/HistorialPage";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import AlumnoQR from "./pages/AlumnoQR";
+import { getAlumnosByTutor, getAlumnoById } from '@/api/alumnos.api';// o la ruta real donde está definida la función
+
 
 
 const App = () => {
@@ -30,7 +32,6 @@ const App = () => {
 
         <Route element={<ProtectedRoute allowedRoles={["tutor", "user"]} />}>
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/alumnoqr/:id" element={<AlumnoQR />} />
         </Route>
       </Routes>
     </ThemeProvider>

@@ -1,22 +1,17 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import DocumentUploader from "@/components/DocumentUploader";
-import EnrollmentStatus from "@/components/ui/EnrollmentStatus";
 import MessagingCenter from "@/components/MessagingCenter";
 import ProfileDropdown from "@/components/ProfileDropdown";
 import { useEffect, useState } from "react";
-import { ROLES } from "@/constants/roles";
-import PaymentHistory from "@/components/ui/PaymentHistory";
-import { usePagos } from '@/contexts/PagosContext';
-import { fetchInscripcionesByTutor } from '@/api/inscripciones.api';
+import { getAlumnosByTutor } from "@/api/alumnos.api";
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [enrollments, setEnrollments] = useState([]);
+  const [alumnos, setAlumnos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { fetchPagos } = usePagos();
 
   if (!user) {
     return (
@@ -41,7 +36,7 @@ export default function DashboardPage() {
     }
 
     let cancelled = false;
-    
+
     const fetchTutorData = async () => {
       console.log("Ejecutando fetchTutorData");
       if (!user?.id) return;
@@ -49,15 +44,15 @@ export default function DashboardPage() {
       try {
         setLoading(true);
         setError(null);
-        console.log("Fetching inscripciones..."); // <-- Agrega esto
-        const inscripciones = await fetchInscripcionesByTutor(user.id);
-        console.log("Datos recibidos:", inscripciones); // <-- Agrega esto
-        setEnrollments(inscripciones);
+        console.log("Fetching alumnos del tutor...");
+        const alumnosData = await getAlumnosByTutor(user.id);
+        console.log("Alumnos recibidos:", alumnosData);
+        setAlumnos(alumnosData);
       } catch (err) {
-        console.error("Error completo:", err); // <-- Mejora el logging
-        setError(err.message); // <-- Usa err.message para más detalles
+        console.error("Error completo:", err);
+        setError(err.message);
       } finally {
-        console.log("Finalizando carga"); // <-- Agrega esto
+        console.log("Finalizando carga");
         setLoading(false);
       }
     };
@@ -65,7 +60,7 @@ export default function DashboardPage() {
     fetchTutorData();
 
     return () => {
-      cancelled = true; // Evita que setState se ejecute si el componente ya se desmontó
+      cancelled = true;
     };
   }, [user?.id]);
 
@@ -98,9 +93,7 @@ export default function DashboardPage() {
     <div className="flex min-h-screen bg-gray-900 text-gray-100 w-full">
       {/* Sidebar Fixed para Tutor */}
       <div className="w-64 bg-gray-800 p-6 flex-shrink-0 border-r border-gray-700 fixed h-full">
-        <h2 className="text-xl font-bold text-blue-400 mb-8">
-          Panel del Tutor
-        </h2>
+        <h2 className="text-xl font-bold text-blue-400 mb-8">Panel del Tutor</h2>
         <nav>
           <ul className="space-y-3">
             <li>
@@ -150,10 +143,10 @@ export default function DashboardPage() {
         {/* Contenido */}
         <main className="flex-1 overflow-y-auto p-6 bg-gray-800">
           <div className="max-w-6xl mx-auto">
-            {enrollments.length === 0 ? (
+            {alumnos.length === 0 ? (
               <div className="bg-gray-700 rounded-xl shadow-lg p-6 mb-6 text-center">
                 <h2 className="text-2xl font-bold text-white mb-4">
-                  No tienes alumnos inscritos
+                  No tienes alumnos asociados
                 </h2>
                 <p className="text-gray-300">
                   Contacta con administración para asociarte a alumnos
@@ -161,42 +154,91 @@ export default function DashboardPage() {
               </div>
             ) : (
               <>
-                {/* Mostrar estado de cada inscripción */}
-                {enrollments.map((enrollment) => (
+                {alumnos.map((alumno) => (
                   <div
-                    key={enrollment.id}
+                    key={alumno.id}
                     className="bg-gray-700 rounded-xl shadow-lg p-6 mb-6"
                   >
-                    <h2 className="text-2xl font-bold text-white mb-4 pb-2 border-b border-gray-600">
-                      {enrollment.alumnos.nombre} - {enrollment.deportes.nombre}
-                    </h2>
+                    {/* Encabezado con información básica */}
+                    <div className="flex justify-between items-start mb-4 pb-2 border-b border-gray-600">
+                      <div>
+                        <h2 className="text-2xl font-bold text-white">
+                          {alumno.nombre} {alumno.apellido_paterno}
+                        </h2>
+                        {alumno.parentesco && (
+                          <p className="text-gray-400">
+                            Parentesco: {alumno.parentesco}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {alumno.foto_url && (
+                          <img
+                            src={alumno.foto_url}
+                            alt={`Foto de ${alumno.nombre}`}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        )}
+                      </div>
+                    </div>
 
-                    <EnrollmentStatus enrollment={enrollment} />
+                    {/* Información detallada en grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <h3 className="text-gray-400 font-medium">
+                          Información Personal
+                        </h3>
+                        <ul className="mt-2 space-y-1">
+                          <li className="text-white">
+                            Edad: {alumno.edad || "No especificada"}
+                          </li>
+                          <li className="text-white">
+                            Género: {alumno.genero || "No especificado"}
+                          </li>
+                          <li className="text-white">
+                            CURP: {alumno.curp || "No registrada"}
+                          </li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h3 className="text-gray-400 font-medium">
+                          Información Médica
+                        </h3>
+                        <ul className="mt-2 space-y-1">
+                          <li className="text-white">
+                            Tipo de sangre:{" "}
+                            {alumno.tipo_sangre || "No especificado"}
+                          </li>
+                          <li className="text-white">
+                            Alergias: {alumno.alergias || "Ninguna conocida"}
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
 
-                    {/* DocumentUploader actualizado */}
+                    {/* Historial de pagos */}
                     <div className="mt-4">
+                      <PaymentHistory alumnoId={alumno.id} />
+                    </div>
+
+                    {/* Documentos */}
+                    <div className="mt-4">
+                      <h3 className="text-lg font-semibold text-white mb-2">
+                        Documentos
+                      </h3>
                       <DocumentUploader
-                        purpose="payment"
-                        enrollmentId={enrollment.id}
+                        purpose="alumno_documents"
+                        alumnoId={alumno.id}
                         onUploadSuccess={() => {
-                          // Actualizar el estado local o recargar datos
-                          setEnrollments((prev) =>
-                            prev.map((e) =>
-                              e.id === enrollment.id
-                                ? { ...e, estado: "pendiente" }
-                                : e
-                            )
-                          );
+                          // Puedes implementar una recarga de datos aquí si es necesario
                         }}
                       />
                     </div>
-
-                    {/* Nuevo componente de historial de pagos */}
-                    <PaymentHistory inscripcionId={enrollment.id} />
                   </div>
                 ))}
               </>
             )}
+            
             {/* Sección de documentos y mensajes */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
               {/* Subir comprobante */}

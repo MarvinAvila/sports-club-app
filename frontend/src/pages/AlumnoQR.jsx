@@ -1,32 +1,29 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import QRCode from 'qrcode.react';
-import { getAlumnoById } from '../api/alumnos.api';
+import React from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 
-const AlumnoQR = () => {
-  const { id } = useParams();
-  const [alumno, setAlumno] = useState(null);
-  const paymentUrl = `http://localhost:3000/pago/${id}`;
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const data = await getAlumnoById(id);
-        setAlumno(data);
-      } catch (error) {
-        console.error(error.message);
-      }
-    };
-
-    fetchData();
-  }, [id]);
-
-  if (!alumno) return <p>Cargando alumno...</p>;
+const AlumnoQR = ({ alumnoId, nombre, apellido }) => {
+  // Genera la URL completa para el QR
+  const qrValue = `${window.location.origin}/alumnoqr/${alumnoId}`;
 
   return (
-    <div>
-      <h2>QR para {alumno.nombre} {alumno.apellido_paterno}</h2>
-      <QRCode value={paymentUrl} />
+    <div className="flex flex-col items-center p-4">
+      <h2 className="text-lg font-semibold text-gray-700 mb-2">Generar Código QR</h2>
+
+      <div className="p-3 bg-white rounded-lg shadow-md">
+        <QRCodeSVG 
+          value={qrValue}
+          size={160}
+          level="H" // Máxima corrección de errores
+          fgColor="#1e40af" // Color azul oscuro
+          bgColor="#ffffff"
+          includeMargin={true}
+        />
+      </div>
+
+      <p className="mt-2 text-sm text-gray-300">
+        {nombre} {apellido}
+      </p>
+      <p className="text-xs text-gray-500 mt-1">ID: {alumnoId}</p>
     </div>
   );
 };

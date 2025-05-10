@@ -6,7 +6,8 @@ import {
   deleteAlumno,
   listAlumnos,
   getAlumnoDocumentos,
-  addDocumentoToAlumno
+  addDocumentoToAlumno,
+  getAlumnosByTutor
 } from '../controllers/alumno.controller.js';
 import { verifyToken, checkRole } from '../middlewares/auth.middleware.js';
 
@@ -24,5 +25,7 @@ router.delete('/:id', checkRole(['admin']), deleteAlumno);
 // Rutas para documentos de alumnos
 router.get('/:alumnoId/documentos', checkRole(['admin', 'tutor']), getAlumnoDocumentos);
 router.post('/:alumnoId/documentos', checkRole(['admin', 'tutor']), addDocumentoToAlumno);
+// routes/alumno.routes.js
+router.get('/tutor/:tutorId', checkRole(['admin', 'tutor']), getAlumnosByTutor);
 
 export default router;

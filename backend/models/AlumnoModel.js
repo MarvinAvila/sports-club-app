@@ -100,3 +100,15 @@ export const addDocumentoAlumno = async (documentoData) => {
     throw new Error(error.message);
   }
 };
+
+export const getAlumnosByTutor = async (tutorId) => {
+  // Esta consulta depende de tu estructura de base de datos
+  // Ejemplo para Supabase:
+  const { data, error } = await supabase
+    .from('alumnos')
+    .select('*')
+    .eq('tutor_id', tutorId);
+  
+  if (error) throw error;
+  return data;
+};

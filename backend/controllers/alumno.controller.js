@@ -4,6 +4,7 @@ import {
   createAlumno as createAlumnoModel,
   updateAlumno as updateAlumnoModel,
   deleteAlumno as deleteAlumnoModel,
+  getAlumnosByTutor as getAlumnosByTutorModel,
   getDocumentosAlumno,
   addDocumentoAlumno
 } from '../models/AlumnoModel.js';
@@ -98,5 +99,15 @@ export const addDocumentoToAlumno = async (req, res) => {
       res.status(201).json({ success: true, data: documento });
   } catch (error) {
       handleError(res, error);
+  }
+};
+
+// controllers/alumno.controller.js
+export const getAlumnosByTutor = async (req, res) => {
+  try {
+    const alumnos = await getAlumnosByTutorModel(req.params.tutorId);
+    res.json({ success: true, data: alumnos });
+  } catch (error) {
+    handleError(res, error);
   }
 };
