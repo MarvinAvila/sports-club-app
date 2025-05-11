@@ -4,7 +4,10 @@ import DocumentUploader from "@/components/DocumentUploader";
 import MessagingCenter from "@/components/MessagingCenter";
 import ProfileDropdown from "@/components/ProfileDropdown";
 import { useEffect, useState } from "react";
-import { getAlumnosByTutor } from "@/api/alumnos.api";
+import {
+  getAlumnosByTutor,
+  generarQRPago, // <-- Añade esta importación
+} from "@/api/alumnos.api";
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
@@ -76,24 +79,27 @@ export default function DashboardPage() {
   }, [user?.id]);
 
   // Función para generar QR
-  const handleGenerarQR = async (alumnoId) => {
-    try {
-      setLoadingQR(true);
-      const response = await generarQRPago(alumnoId);
-      setQrData({
-        alumnoId,
-        qrCode: response.qrCode,
-        paymentUrl: response.paymentUrl,
-        nombre: response.alumno.nombre,
-        apellido: response.alumno.apellido,
-      });
-    } catch (error) {
-      console.error("Error al generar QR:", error);
-      setError("Error al generar el código QR");
-    } finally {
-      setLoadingQR(false);
-    }
-  };
+const handleGenerarQR = async (alumnoId) => {
+  try {
+    setLoadingQR(true);
+    const response = await generarQRPago(alumnoId);
+    console.log("Respuesta del QR:", response); // Para debug
+    
+    setQrData({
+      alumnoId,
+      qrCode: response.qrCode,
+      paymentUrl: response.paymentUrl,
+      nombre: response.alumno.nombre,
+      apellido: response.alumno.apellido,
+    });
+  } catch (error) {
+    console.error("Error al generar QR:", error);
+    setError(error.message || "Error al generar el código QR");
+    // Opcional: Mostrar notificación al usuario
+  } finally {
+    setLoadingQR(false);
+  }
+};
 
   const handleLogout = () => {
     logout();
@@ -262,7 +268,9 @@ export default function DashboardPage() {
                 </p>
               </div>
             ) : (
-              <></>
+              <div className="space-y-6">
+                {alumnos.map((alumno) => renderAlumnoCard(alumno))}
+              </div>
             )}
 
             {/* Sección de documentos y mensajes */}

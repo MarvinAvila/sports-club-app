@@ -1,37 +1,45 @@
 const BASE_URL = import.meta.env.VITE_BACKEND_URL; // Así accedes a la variable del .env.local
+import { supabase } from '@/lib/supabaseClient';
 
 const login = async (email, password) => {
   try {
+    // 1. Limpiar sesiones previas
+    await supabase.auth.signOut();
+    localStorage.removeItem('sb-access-token');
+    localStorage.removeItem('sb-refresh-token');
+
+    // 2. Autenticar con Supabase
+    const { data: supabaseData, error: supabaseError } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (supabaseError) {
+      throw new Error(supabaseError.message || "Credenciales incorrectas");
+    }
+
+    // 3. Verificar con tu backend si es necesario
     const response = await fetch(`${BASE_URL}/api/auth/login`, {
-      // Asegúrate de incluir /api/auth
       method: "POST",
-      mode: "cors",
-      credentials: "include", // Importante para manejar cookies/tokens
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${supabaseData.session.access_token}`
       },
       body: JSON.stringify({ email, password }),
     });
 
-    console.log("Respuesta del servidor:", response); // Para depuración
-
     if (!response.ok) {
+      await supabase.auth.signOut();
       const errorData = await response.json();
-      throw new Error(errorData.error || "Credenciales incorrectas");
+      throw new Error(errorData.error || "Error en autenticación");
     }
 
-    const result  = await response.json();
-
-    const { token, rol, id, auth_id, nombre, email: userEmail, telefono } = result.data;
-
-    console.log("Datos recibidos:", result.data); // Para depuración
-
-    // Asegúrate que esta estructura coincide con lo que devuelve el backend
+    const result = await response.json();
     return result.data;
 
   } catch (error) {
-    console.error("Error en la solicitud:", error);
-    throw new Error(error.message || "Error al conectar con el servidor");
+    console.error("Error en login:", error);
+    throw error;
   }
 };
 
@@ -99,9 +107,47 @@ export const registerUser = (formData, onProgress) => {
   });
 };
 
-// Añade al objeto exportado
+export const logout = async () => {
+  try {
+    // 1. Obtener el token actual de Supabase
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+
+    if (!token) {
+      throw new Error('No hay sesión activa');
+    }
+
+    // 2. Cerrar sesión en el backend
+    const response = await fetch(`${BASE_URL}/api/auth/logout`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Error en logout backend:', errorData);
+      throw new Error(errorData.error || 'Error al cerrar sesión');
+    }
+
+    // 3. Cerrar sesión en Supabase
+    const { error: supabaseError } = await supabase.auth.signOut();
+    if (supabaseError) throw supabaseError;
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error en logout:', error);
+    throw error;
+  }
+};
+
+// Actualiza tu objeto exportado
 export const authApi = {
   login,
+  logout, // <-- Añade la nueva función aquí
   fetchUserRole,
   registerUser,
 };

@@ -61,6 +61,8 @@ create table public.documentos_alumno (
   )
 ) TABLESPACE pg_default;
 
+
+
 create table public.inscripciones (
   id uuid not null default extensions.uuid_generate_v4 (),
   alumno_id uuid null,
@@ -84,6 +86,7 @@ create table public.inscripciones (
     )
   )
 ) TABLESPACE pg_default;
+
 
 create table public.notificaciones (
   id uuid not null default extensions.uuid_generate_v4 (),
@@ -120,6 +123,23 @@ create table public.pagos (
   constraint pagos_recibido_por_fkey foreign KEY (recibido_por) references usuarios (id)
 ) TABLESPACE pg_default;
 
+
+create table public.pre_registros (
+  id uuid not null default extensions.uuid_generate_v4 (),
+  auth_id uuid not null,
+  tutor_data jsonb not null,
+  alumno_data jsonb not null,
+  documentos_data jsonb null,
+  created_at timestamp with time zone null default now(),
+  expires_at timestamp with time zone not null,
+  constraint pre_registros_pkey primary key (id),
+  constraint fk_auth_user foreign KEY (auth_id) references auth.users (id) on delete CASCADE
+) TABLESPACE pg_default;
+
+create index IF not exists idx_pre_registros_auth_id on public.pre_registros using btree (auth_id) TABLESPACE pg_default;
+
+create index IF not exists idx_pre_registros_expires on public.pre_registros using btree (expires_at) TABLESPACE pg_default;
+
 create table public.tutores (
   id uuid not null,
   nombre text not null,
@@ -134,7 +154,7 @@ create table public.tutores (
   contraseña_hash text null,
   constraint tutores_pkey primary key (id),
   constraint tutores_email_key unique (email),
-  constraint tutores_id_fkey foreign KEY (id) references auth.users (id) on delete CASCADE
+  constraint tutores_id_fkey foreign KEY (id) references usuarios (id) on update CASCADE
 ) TABLESPACE pg_default;
 
 create table public.tutores_alumnos (
@@ -145,6 +165,7 @@ create table public.tutores_alumnos (
   constraint tutores_alumnos_alumno_id_fkey foreign KEY (alumno_id) references alumnos (id) on delete CASCADE,
   constraint tutores_alumnos_tutor_id_fkey foreign KEY (tutor_id) references tutores (id) on delete CASCADE
 ) TABLESPACE pg_default;
+
 
 create table public.usuarios (
   id uuid not null default extensions.uuid_generate_v4 (),
@@ -158,29 +179,5 @@ create table public.usuarios (
   constraint usuarios_pkey primary key (id),
   constraint usuarios_email_key unique (email),
   constraint usuarios_auth_id_fkey foreign KEY (auth_id) references auth.users (id) on delete CASCADE,
-  constraint usuarios_rol_check check ((rol = 'admin'::text))
+  constraint usuarios_rol_check check ((rol = any (array['admin'::text, 'tutor'::text])))
 ) TABLESPACE pg_default;
-
-CREATE TABLE IF NOT EXISTS public.documentos_alumno (
-  id uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
-  alumno_id uuid NOT NULL REFERENCES alumnos(id) ON DELETE CASCADE,
-  tipo_documento text NOT NULL CHECK (
-    tipo_documento IN ('CURP', 'ACTA_NACIMIENTO', 'CREDENCIAL_ESCOLAR', 'INE_TUTOR', 'FOTO')
-  ),
-  url text NOT NULL,
-  subido_en timestamptz DEFAULT now()
-);
-
-CREATE TABLE pre_registros (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  auth_id UUID NOT NULL,
-  tutor_data JSONB NOT NULL,
-  alumno_data JSONB NOT NULL,
-  documentos_data JSONB,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  expires_at TIMESTAMPTZ NOT NULL,
-  CONSTRAINT fk_auth_user FOREIGN KEY (auth_id) REFERENCES auth.users(id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_pre_registros_auth_id ON pre_registros (auth_id);
-CREATE INDEX idx_pre_registros_expires ON pre_registros (expires_at);

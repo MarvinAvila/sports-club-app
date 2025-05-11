@@ -50,23 +50,50 @@ export const deleteTutorAlumno = async (tutorId, alumnoId) => {
 
 export const getAlumnosByTutor = async (tutorId) => {
   try {
+    console.log('Obteniendo alumnos para el tutor:', tutorId);
     const { data, error } = await supabaseAdmin
       .from('tutores_alumnos')
       .select(`
         parentesco,
-        alumnos:alumno_id(*)
+        alumnos:alumno_id (
+          id,
+          nombre,
+          apellido_paterno,
+          apellido_materno,
+          fecha_nacimiento,
+          genero,
+          foto_url,
+          alergias,
+          observaciones_medicas,
+          curp,
+          tipo_sangre,
+          lugar_nacimiento,
+          nivel_estudios,
+          municipio_residencia,
+          codigo_postal,
+          numero_camiseta,
+          cirugias_previas,
+          afecciones_medicas,
+          nombre_padres,
+          telefonos_contacto,
+          documento_curp_url,
+          acta_nacimiento_url,
+          credencial_escolar_url,
+          ine_tutor_url
+        )
       `)
       .eq('tutor_id', tutorId);
 
-    if (error) throw new Error('Error al obtener alumnos del tutor');
+    if (error) throw new Error('Error al obtener alumnos del tutor: ' + error.message);
     
-    // Formatear la respuesta para incluir el parentesco
+    // Formatear la respuesta para aplanar la estructura
     return data.map(item => ({
-      ...item.alumnos,
-      parentesco: item.parentesco
+      ...item.alumnos,  // Todos los campos del alumno
+      parentesco: item.parentesco  // Campo adicional de la relación
     }));
   } catch (error) {
-    throw new Error(error.message);
+    console.error('Error en getAlumnosByTutor:', error);
+    throw new Error('No se pudieron obtener los alumnos: ' + error.message);
   }
 };
 

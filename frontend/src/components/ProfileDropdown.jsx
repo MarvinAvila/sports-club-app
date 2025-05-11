@@ -15,15 +15,25 @@ import { useTheme } from "@/contexts/ThemeContext"; // Importa el contexto del t
 
 const ProfileDropdown = ({ user, role = "Usuario" }) => {
   const { logout, user: authUser } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { theme, toggleTheme } = useTheme(); // Usa el contexto del tema
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  const handleLogout = () => {
-    logout();
+const handleLogout = async () => {
+  setIsLoggingOut(true);
+  try {
+    await logout();
+    // Redirigir después de cerrar sesión
     navigate("/login");
-  };
+  } catch (error) {
+    console.error("Error al cerrar sesión:", error);
+    // Mostrar mensaje de error al usuario si lo deseas
+  } finally {
+    setIsLoggingOut(false);
+  }
+};
 
   useEffect(() => {
     // Cerrar dropdown al hacer clic fuera
@@ -128,10 +138,13 @@ const ProfileDropdown = ({ user, role = "Usuario" }) => {
           <div className="py-2">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center px-4 py-2 text-sm text-red-500 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+              disabled={isLoggingOut}
+              className="w-full flex items-center px-4 py-2 text-sm text-red-500 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
             >
               <FiLogOut className="w-4 h-4 mr-3" />
-              <span>Cerrar sesión</span>
+              <span>
+                {isLoggingOut ? "Cerrando sesión..." : "Cerrar sesión"}
+              </span>
             </button>
           </div>
         </div>

@@ -3,23 +3,26 @@ import { config } from 'dotenv';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
-// Configurar rutas absolutas para .env
+// Configurar rutas absolutas para .env (desde la raíz del proyecto)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Cargar .env con ruta absoluta - SOLO UNA VEZ
-config({ path: path.resolve(__dirname, '.env') });
+// Cargar .env desde la raíz del proyecto (../../ porque estamos en src/)
+config({ path: path.resolve(__dirname, '../../.env') });
 
 // 2. VERIFICACIÓN INMEDIATA DE VARIABLES
 console.log("=== Verificación de variables ===");
 console.log("Directorio actual:", __dirname);
-console.log("Ruta del .env:", path.resolve(__dirname, '.env'));
-console.log("SUPABASE_URL:", process.env.SUPABASE_URL ? "✅ OK" : "❌ FALTA");
-console.log("SUPABASE_SERVICE_KEY:", process.env.SUPABASE_SERVICE_KEY ? "✅ OK" : "❌ FALTA");
+console.log("Ruta del .env:", path.resolve(__dirname, '../../.env'));
+console.log("SUPABASE_URL:", process.env.SUPABASE_URL || "UNDEFINED");
+console.log("SUPABASE_SERVICE_KEY:", process.env.SUPABASE_SERVICE_KEY ? "✅ PRESENTE" : "❌ FALTANTE");
 
 // 3. IMPORTAR EL RESTO DE DEPENDENCIAS
 import express from "express";
 import cors from "cors";
+
+// Importar Supabase DESPUÉS de configurar dotenv
+import { supabaseAdmin } from "./config/supabaseClient.js";
 
 // Importar rutas
 import authRoutes from "./routes/auth.routes.js";
@@ -50,11 +53,11 @@ app.use(express.urlencoded({ extended: true })); // Para form-urlencoded
 
 // Rutas base
 app.use("/api/auth", authRoutes);
+app.use("/api/pagos", pagoRoutes);
 app.use("/api/alumnos", alumnoRoutes);
 app.use("/api/tutor", tutorRoutes);
 app.use("/api/deportes", deporteRoutes);
 app.use("/api/inscripciones", inscripcionRoutes);
-app.use("/api/pagos", pagoRoutes);
 app.use("/api/notificaciones", notificacionRoutes);
 
 // Ruta de salud

@@ -272,3 +272,21 @@ export const registerTutorWithAlumno = async (req, res) => {
     });
   }
 };
+
+// auth.controller.js
+export const logoutUser = async (req, res) => {
+  try {
+    // Verificar el token primero
+    if (!req.headers.authorization) {
+      return res.status(401).json({ error: 'Token no proporcionado' });
+    }
+
+    // Aquí puedes agregar lógica adicional como registrar el logout
+    res.clearCookie('session'); // Si usas cookies
+    res.json({ success: true });
+    console.log("Usuario desconectado");
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+

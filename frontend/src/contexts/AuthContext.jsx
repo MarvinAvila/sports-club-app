@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { AuthContext } from "./AuthContextInstance";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabaseClient";
+import { authApi } from "../api/auth.api"; // Asegúrate de que la ruta sea correcta
 
 export const AuthProvider = ({ children }) => {
   // Estado unificado con todos los datos de autenticación
@@ -40,16 +42,33 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("auth", JSON.stringify(newAuthState));
   };
 
-  const logout = () => {
+const logout = async () => {
+  try {
+    // 1. Cerrar sesión usando la API
+    await authApi.logout();
+
+    // 2. Limpiar estado local
     setAuthState({
       token: null,
       role: null,
       user: null,
       isAuthenticated: false,
     });
+
+    // 3. Limpiar almacenamiento
     localStorage.removeItem("auth");
+    localStorage.removeItem('sb-access-token');
+    localStorage.removeItem('sb-refresh-token');
+    sessionStorage.clear();
+
+    // 4. Redirigir
     navigate("/login");
-  };
+  } catch (error) {
+    console.error("Error en logout:", error);
+    // Opcional: Mostrar mensaje de error al usuario
+    throw error; // Re-lanzar el error para que pueda ser manejado por el componente
+  }
+};
 
   // Función que define la ruta de redirección según el rol
   const getRedirectPath = (role) => {
