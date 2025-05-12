@@ -62,9 +62,9 @@ export const getAllUsers = async () => {
 
 export const createUser = async (userData) => {
   try {
-    // Validar que el rol sea 'admin' (único permitido según el esquema)
-    if (userData.rol && userData.rol !== 'admin') {
-      throw new Error('Rol no válido. Solo se permite "admin"');
+    // Validar que el rol sea 'admin' o 'tutor'
+    if (userData.rol && !['admin', 'tutor'].includes(userData.rol)) {
+      throw new Error('Rol no válido. Solo se permite "admin" o "tutor"');
     }
 
     const { data, error } = await supabaseAdmin
@@ -72,10 +72,15 @@ export const createUser = async (userData) => {
       .insert([userData])
       .select();
 
-    if (error) throw new Error('Error al crear el usuario');
+    if (error) {
+      console.error('Error detallado al crear usuario:', error);
+      throw new Error(error.message || 'Error al crear el usuario');
+    }
+    
     return data[0];
   } catch (error) {
-    throw new Error(error.message);
+    console.error('Error en createUser:', error);
+    throw error;
   }
 };
 

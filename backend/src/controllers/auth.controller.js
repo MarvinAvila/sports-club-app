@@ -1,9 +1,15 @@
 import { supabaseAdmin } from "../config/supabaseClient.js";
-import { getUserByAuthId, getUserByEmail } from "../models/UsuarioModel.js";
 
-import { createAlumno } from "../models/AlumnoModel.js";
+import bcrypt from "bcryptjs";
+import {
+  createUser,
+  getUserByAuthId,
+  getUserByEmail,
+} from "../models/UsuarioModel.js";
 import { createTutor } from "../models/TutorModel.js";
-import { addAlumnoToTutor } from "../models/TutorAlumnoModel.js";
+import { createAlumno } from "../models/AlumnoModel.js";
+import { createTutorAlumno } from "../models/TutorAlumnoModel.js";
+import { handleDocumentosRegistro } from "../models/DocumentosAlumnoModel.js";
 
 // Añade este helper al inicio del archivo
 const waitForAuthUser = async (userId, timeoutMs = 5000) => {
@@ -116,159 +122,175 @@ export const getUserRole = async (req, res) => {
 
 export const registerTutorWithAlumno = async (req, res) => {
   try {
-    // 1. Extraer datos del request
-    const {
-      // Datos del alumno
-      nombre,
-      apellidoPaterno,
-      apellidoMaterno,
-      curp,
-      fechaNacimiento,
-      tipoSangre,
-      email,
-      lugarNacimiento,
-      nivelEstudios,
-      municipioResidencia,
-      codigoPostal,
-      numeroCamiseta,
-      alergias,
-      cirugias,
-      afecciones,
-      // Datos del tutor
-      nombreTutor,
-      apellidoPaternoTutor,
-      apellidoMaternoTutor,
-      emailTutor,
-      telefonosContacto,
-      parentesco,
-      password,
-    } = req.body;
+    const { body: formData, files } = req;
 
-    // 1. Validación básica
-    if (!password || password.length < 6) {
-      throw new Error("La contraseña debe tener al menos 6 caracteres");
+    // Validación básica
+    if (!formData.emailTutor || !formData.password) {
+      return res.status(400).json({
+        error: "Datos incompletos",
+        message: "Email y contraseña son requeridos",
+      });
     }
 
-    // 2. Verificar si el usuario ya existe en auth.users
-    const { data: existingAuthUser, error: authCheckError } =
-      await supabaseAdmin.auth.admin.listUsers({
-        email: emailTutor,
+    // PASO 1: Crear usuario en TU tabla (no en auth.users)
+    const usuarioData = {
+      email: formData.emailTutor,
+      rol: "tutor",
+      nombre: formData.nombreTutor,
+      telefono: formData.telefonosContacto,
+      contraseña_hash: formData.password
+    };
+
+    const usuario = await createUser(usuarioData);
+
+    // PASO 2: Registrar en Supabase Auth (opcional, solo si necesitas autenticación)
+    const { data: authData, error: authError } =
+      await supabaseAdmin.auth.signUp({
+        email: formData.emailTutor,
+        password: formData.password,
+        options: {
+          data: {
+            user_metadata: {
+              db_user_id: usuario.id, // Guarda referencia a tu usuario
+            },
+          },
+        },
       });
 
-    if (authCheckError) throw new Error("Error al verificar usuario");
-
-    let authUser = existingAuthUser.users[0];
-    let accessToken = null;
-
-    // 3. Si no existe, crearlo
-    if (!authUser) {
-      const { data: newAuthData, error: authError } =
-        await supabaseAdmin.auth.signUp({
-          email: emailTutor,
-          password: password,
-          options: {
-            data: {
-              full_name: `${nombreTutor} ${apellidoPaternoTutor}`,
-              phone: telefonosContacto,
-            },
-            emailRedirectTo: `${process.env.FRONTEND_URL}/dashboard`,
-          },
-        });
-
-      if (authError) throw new Error(authError.message);
-      authUser = newAuthData.user;
-    } else {
-      // Si ya existe, obtener token
-      const { data: session, error: sessionError } =
-        await supabaseAdmin.auth.signInWithPassword({
-          email: emailTutor,
-          password: password,
-        });
-
-      if (sessionError) throw new Error(sessionError.message);
-      accessToken = session.session.access_token;
+    if (authError) {
+      // Eliminar el usuario creado si falla auth
+      await deleteUser(usuario.id);
+      throw new Error(authError.message);
     }
 
-    // 4. Verificar si ya está registrado en tu sistema
-    const { data: existingTutor, error: tutorError } = await supabaseAdmin
-      .from("tutores")
-      .select("*")
-      .eq("email", emailTutor)
-      .maybeSingle();
+    await updateUser(usuario.id, { auth_id: authData.user?.id || null });
 
-    if (tutorError) throw new Error(tutorError.message);
-    if (existingTutor) throw new Error("El tutor ya está registrado");
+    // PASO 3: Registro en tabla tutores
+    const tutorData = {
+      id: usuario.id,
+      nombre: formData.nombreTutor,
+      apellido_paterno: formData.apellidoPaternoTutor,
+      apellido_materno: formData.apellidoMaternoTutor || null,
+      email: formData.emailTutor,
+      telefono: formData.telefonosContacto,
+      parentesco: formData.parentesco || "Padre/Madre",
+      ine_url: null, // Se actualizará después con el documento
+    };
 
-    // 5. Insertar en tus tablas
-    const tutor = await createTutor({
-      auth_id: authUser.id,
-      nombre: nombreTutor,
-      apellido_paterno: apellidoPaternoTutor,
-      apellido_materno: apellidoMaternoTutor,
-      email: emailTutor,
-      telefono: telefonosContacto,
-      parentesco: parentesco,
+    const tutor = await createTutor(tutorData);
+
+    // PASO 4: Registro en tabla alumnos
+    const alumnoData = {
+      nombre: formData.nombre,
+      apellido_paterno: formData.apellidoPaterno,
+      apellido_materno: formData.apellidoMaterno || null,
+      fecha_nacimiento: formData.fechaNacimiento || null,
+      genero: formData.genero || null,
+      curp: formData.curp || null,
+      tipo_sangre: formData.tipoSangre || null,
+      lugar_nacimiento: formData.lugarNacimiento || null,
+      nivel_estudios: formData.nivelEstudios || null,
+      municipio_residencia: formData.municipioResidencia || null,
+      codigo_postal: formData.codigoPostal || null,
+      numero_camiseta: formData.numeroCamiseta || null,
+      alergias: formData.alergias || null,
+      afecciones_medicas: formData.afecciones || null,
+      cirugias_previas: formData.cirugias || null,
+      nombre_padres: formData.nombreTutor || null,
+      telefonos_contacto: formData.telefonosContacto || null,
+    };
+
+    const alumno = await createAlumno(alumnoData);
+
+    // PASO 5: Relación tutor-alumno
+    await createTutorAlumno({
+      tutor_id: tutor.id,
+      alumno_id: alumno.id,
+      parentesco: formData.parentesco || "Padre/Madre",
     });
 
-    const alumno = await createAlumno({
-      nombre,
-      apellido_paterno: apellidoPaterno,
-      apellido_materno: apellidoMaterno,
-      curp,
-      fecha_nacimiento: new Date(fechaNacimiento).toISOString(),
-      tipo_sangre: tipoSangre,
-      lugar_nacimiento: lugarNacimiento,
-      nivel_estudios: nivelEstudios,
-      municipio_residencia: municipioResidencia,
-      codigo_postal: codigoPostal,
-      numero_camiseta: parseInt(numeroCamiseta) || null,
-      alergias: alergias || null,
-      cirugias_previas: cirugias || null,
-      afecciones_medicas: afecciones || null,
-      email: email || null,
-    });
+    // PASO 6: Manejo de documentos (opcional si hay archivos)
+    if (files) {
+      const documentos = [
+        { tipo: "CURP", file: files.curpFile?.[0] },
+        { tipo: "ACTA_NACIMIENTO", file: files.actaNacimientoFile?.[0] },
+        { tipo: "CREDENCIAL_ESCOLAR", file: files.credencialEscolarFile?.[0] },
+        { tipo: "INE_TUTOR", file: files.ineTutorFile?.[0] },
+        { tipo: "FOTO", file: files.fotoJugadorFile?.[0] },
+      ];
 
-    await addAlumnoToTutor(tutor.id, alumno.id, { parentesco });
+      for (const doc of documentos) {
+        if (doc.file) {
+          // Subir a Supabase Storage
+          const filePath = `documentos/${alumno.id}/${
+            doc.tipo
+          }_${Date.now()}.${doc.file.originalname.split(".").pop()}`;
 
-    // 5. Procesar documentos si existen
-    if (req.files) {
-      for (const [fieldName, files] of Object.entries(req.files)) {
-        const config = DOCUMENT_MAPPING[fieldName];
-        if (!config || !files?.length) continue;
+          const { error: uploadError } = await supabaseAdmin.storage
+            .from("documentos")
+            .upload(filePath, doc.file.buffer, {
+              contentType: doc.file.mimetype,
+              upsert: false,
+            });
 
-        const file = files[0];
-        const fileExt = file.originalname.split(".").pop();
-        const fileName = `${uuidv4()}.${fileExt}`;
-        const storagePath = `alumnos/${alumno.id}/${config.carpeta}/${fileName}`;
+          if (uploadError) {
+            console.error(`Error subiendo ${doc.tipo}:`, uploadError);
+            continue; // Continuar con el siguiente documento si hay error
+          }
 
-        await supabaseAdmin.storage
-          .from("documentos")
-          .upload(storagePath, file.buffer, {
-            contentType: file.mimetype,
+          // Obtener URL pública
+          const {
+            data: { publicUrl },
+          } = supabaseAdmin.storage.from("documentos").getPublicUrl(filePath);
+
+          // Registrar documento en la base de datos
+          await handleDocumentosRegistro({
+            alumno_id: alumno.id,
+            tipo_documento: doc.tipo,
+            url: publicUrl,
           });
 
-        await supabaseAdmin.from("documentos_alumno").insert({
-          alumno_id: alumno.id,
-          tipo_documento: config.tipo,
-          url: storagePath,
-        });
+          // Actualizar URL de INE en tutor si corresponde
+          if (doc.tipo === "INE_TUTOR") {
+            await updateTutor(tutor.id, { ine_url: publicUrl });
+          }
+        }
       }
     }
 
-    res.status(200).json({
+    // Respuesta exitosa
+    return res.status(201).json({
       success: true,
       data: {
-        tutorId: tutor.id,
-        alumnoId: alumno.id,
-        message: "Registro completado exitosamente",
+        tutor: {
+          id: tutor.id,
+          email: tutor.email,
+          nombre: `${tutor.nombre} ${tutor.apellido_paterno}`,
+        },
+        alumno: {
+          id: alumno.id,
+          nombre: `${alumno.nombre} ${alumno.apellido_paterno}`,
+        },
       },
     });
   } catch (error) {
-    console.error("Error en registro:", error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-      details: process.env.NODE_ENV === "development" ? error.stack : undefined,
+    console.error("Error en registro completo:", error);
+
+    // Intentar limpiar registros creados en caso de error
+    try {
+      if (authData?.user?.id) {
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+      }
+    } catch (cleanupError) {
+      console.error("Error en limpieza:", cleanupError);
+    }
+
+    return res.status(500).json({
+      error: "Error en el registro",
+      message:
+        process.env.NODE_ENV === "development"
+          ? error.message
+          : "Ocurrió un error al completar el registro",
     });
   }
 };
@@ -278,15 +300,14 @@ export const logoutUser = async (req, res) => {
   try {
     // Verificar el token primero
     if (!req.headers.authorization) {
-      return res.status(401).json({ error: 'Token no proporcionado' });
+      return res.status(401).json({ error: "Token no proporcionado" });
     }
 
     // Aquí puedes agregar lógica adicional como registrar el logout
-    res.clearCookie('session'); // Si usas cookies
+    res.clearCookie("session"); // Si usas cookies
     res.json({ success: true });
     console.log("Usuario desconectado");
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-

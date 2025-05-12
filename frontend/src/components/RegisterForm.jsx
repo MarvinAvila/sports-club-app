@@ -50,12 +50,16 @@ const RegisterForm = () => {
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   const nextStep = () => setStep((prev) => prev + 1);
   const prevStep = () => setStep((prev) => prev - 1);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleModalClose = () => {
     setShowSuccessModal(false);
+    setShowErrorModal(false);
     navigate("/login");
   };
 
@@ -98,23 +102,25 @@ const RegisterForm = () => {
 
   const validateStep = (step) => {
     const newErrors = {};
+    
     if (step === 1) {
-      const fields = [
+      const requiredFields = [
         "apellidoPaterno",
-        "apellidoMaterno",
         "nombre",
         "curp",
         "fechaNacimiento",
         "tipoSangre",
         "lugarNacimiento",
-        "nivelEstudios",
         "municipioResidencia",
         "codigoPostal",
-        "numeroCamiseta",
       ];
-      fields.forEach((f) => {
-        if (!formData[f]) newErrors[f] = "Este campo es requerido";
+      
+      requiredFields.forEach((field) => {
+        if (!formData[field]) {
+          newErrors[field] = "Este campo es requerido";
+        }
       });
+
       if (formData.curp) {
         const validation = validateCURP(formData.curp);
         if (!validation.isValid) {
@@ -131,42 +137,49 @@ const RegisterForm = () => {
           }
         }
       }
-      if (
-        formData.email &&
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)
-      ) {
+
+      if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
         newErrors.email = "Email no válido";
       }
     }
 
     if (step === 3) {
-      const fields = [
+      const requiredFields = [
         "nombreTutor",
         "apellidoPaternoTutor",
-        "apellidoMaternoTutor",
         "emailTutor",
         "password",
         "telefonosContacto",
         "parentesco",
       ];
-      fields.forEach((f) => {
-        if (!formData[f]) newErrors[f] = "Este campo es requerido";
+      
+      requiredFields.forEach((field) => {
+        if (!formData[field]) {
+          newErrors[field] = "Este campo es requerido";
+        }
       });
+
+      if (formData.password && formData.password.length < 8) {
+        newErrors.password = "La contraseña debe tener al menos 8 caracteres";
+      }
     }
 
     if (step === 4) {
-      const fileFields = [
+      const requiredFiles = [
         "curpFile",
         "actaNacimientoFile",
-        "credencialEscolarFile",
         "ineTutorFile",
         "fotoJugadorFile",
       ];
-      fileFields.forEach((f) => {
-        if (!files[f]) newErrors[f] = "Este documento es requerido";
+      
+      requiredFiles.forEach((fileType) => {
+        if (!files[fileType]) {
+          newErrors[fileType] = "Este documento es requerido";
+        }
       });
-      if (files.fotoJugadorFile && files.fotoJugadorFile.size > 50000) {
-        newErrors.fotoJugadorFile = "La foto no debe exceder 50KB";
+
+      if (files.fotoJugadorFile && files.fotoJugadorFile.size > 5 * 1024 * 1024) {
+        newErrors.fotoJugadorFile = "La foto no debe exceder 5MB";
       }
     }
 
@@ -176,23 +189,42 @@ const RegisterForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateStep(4)) return;
+    
+    // Validar el paso actual antes de enviar
+    if (!validateStep(4)) {
+      return;
+    }
 
     setIsLoading(true);
+    setErrors({});
 
-    // Simulamos un tiempo de procesamiento (opcional)
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      // Llamar a la API de registro
+      const response = await authApi.registerTutorWithAlumno(
+        formData,
+        files,
+        (progress) => {
+          setUploadProgress(progress);
+        }
+      );
 
-    // Mostrar modal de éxito
-    setShowSuccessModal(true);
+      // Mostrar modal de éxito
+      setShowSuccessModal(true);
 
-    // Redirigir después de 3 segundos
-    setTimeout(() => {
-      navigate("/login");
-    }, 3000);
+      // Redirigir después de 3 segundos
+      setTimeout(() => {
+        navigate("/login");
+      }, 3000);
 
-    setIsLoading(false);
+    } catch (error) {
+      console.error("Error en el registro:", error);
+      setErrorMessage(error.message || "Ocurrió un error en el registro");
+      setShowErrorModal(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
   return (
     <>
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -380,7 +412,9 @@ const RegisterForm = () => {
           </form>
         </div>
       </div>
-      <Modal isOpen={showSuccessModal} onClose={() => navigate("/login")}>
+
+      {/* Modal de éxito */}
+      <Modal isOpen={showSuccessModal} onClose={handleModalClose}>
         <div className="text-center p-6">
           <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100">
             <svg
@@ -402,6 +436,42 @@ const RegisterForm = () => {
           </h3>
           <div className="mt-2 text-sm text-gray-500">
             <p>Serás redirigido automáticamente al login...</p>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de error */}
+      <Modal isOpen={showErrorModal} onClose={handleModalClose}>
+        <div className="text-center p-6">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+            <svg
+              className="h-6 w-6 text-red-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </div>
+          <h3 className="mt-3 text-lg font-medium text-gray-900">
+            Error en el registro
+          </h3>
+          <div className="mt-2 text-sm text-gray-500">
+            <p>{errorMessage}</p>
+          </div>
+          <div className="mt-4">
+            <button
+              type="button"
+              className="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+              onClick={handleModalClose}
+            >
+              Entendido
+            </button>
           </div>
         </div>
       </Modal>

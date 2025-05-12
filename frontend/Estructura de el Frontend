@@ -3,7 +3,8 @@
 ├── 📂 node_modules/          # Dependencias
 └── 📂 src/
     ├── 📂 api/
-    │   ├── auth.api.js       # Llamadas a la API de autenticación (fetchUserRole)
+    │   ├── auth.api.js       # Llamadas a la API de autenticación 
+    │   ├── alumnos.api.js   
     │   ├── inscripciones.js
     │   ├── pagos.api.js    # Llamadas a la API de deportes
     │   └── students.api.js
@@ -15,6 +16,7 @@
     │   │   ├── EnrollmentForm.jsx
     │   │   ├── EnrollmentStatus.jsx
     │   │   ├── Input.jsx
+    │   │   ├── Modal.jsx
     │   │   ├── PaymentHistory.jsx
     │   │   ├── TutorLayout.jsx
     │   │   └── SportCard.jsx
@@ -31,7 +33,11 @@
     │   ├── MessagingCenter.jsx
     │   ├── DocumentUploader.jsx
     |   ├── ProfileDropdown.jsx
-    │   ├── RegisterPage.jsx
+    │   ├── RegisterForm.jsx
+    │   ├── Step1PersonalInfo.jsx
+    │   ├── Step2MedicalInfo.jsx
+    │   ├── Step3TutorInfo.jsx
+    │   ├── Step4DocumentsInfo.jsx
     │   └── ProtectedRoute.jsx
     ├─── 📂 constants/          # Nueva carpeta
     │       └── roles.js          # Define ROLES 
@@ -40,8 +46,10 @@
     │   ├── AuthContext.jsx   # Contexto de autenticación
     │   ├── ThemeContext.jsx # Proveedor del contexto
     │   ├── PagosContext.jsx # Proveedor del contexto
+    │   ├── useAuth.jsx # Proveedor del contexto
     │   └── AuthProvider.jsx  # Proveedor del contexto
     ├── 📂 hooks/
+    │   ├── registro.js 
     │   ├── useAuth.js         # Hook personalizado para autenticación
     │   ├── useInscripciones.js
     │   ├── useLogin.js
@@ -52,7 +60,11 @@
     │   └── supabaseClient.js # Configuración de Supabase
     ├── 📂 pages/
     │   ├── AdminPage.jsx
+    │   ├── AlumnosPage.jsx
+    │   ├── AlumnoQR.jsx
+    │   ├── CalendarPage.jsx
     │   ├── DashboardPage.jsx
+    │   ├── HistorialPage.jsx
     │   ├── HomePage.jsx
     │   ├── LoginPage.jsx
     │   └── RegisterPage.jsx
