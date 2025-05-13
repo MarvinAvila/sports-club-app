@@ -12,12 +12,9 @@ module.exports = {
           900: '#0f172a',
           800: '#1e293b',
           700: '#334155',
-          // Añade colores para el tema claro
-          light: {
-            900: '#f8fafc',
-            800: '#f1f5f9',
-            700: '#e2e8f0',
-          }
+          'light-900': '#f8fafc',
+          'light-800': '#f1f5f9',
+          'light-700': '#e2e8f0',
         },
         accent: {
           500: '#6366f1',
@@ -26,14 +23,13 @@ module.exports = {
         success: '#10b981',
         warning: '#f59e0b',
         danger: '#ef4444',
-        // Añade colores base para ambos temas
-        background: {
+        baseBackground: {
           dark: '#020617',
-          light: '#ffffff'
+          light: '#ffffff',
         },
-        text: {
+        baseText: {
           dark: '#f8fafc',
-          light: '#020617'
+          light: '#020617',
         }
       },
       keyframes: {

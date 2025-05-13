@@ -11,29 +11,29 @@ import CalendarioPage from "./pages/CalendarioPage";
 import HistorialPage from "./pages/HistorialPage";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import AlumnoQR from "./pages/AlumnoQR";
-import { getAlumnosByTutor, getAlumnoById } from '@/api/alumnos.api';// o la ruta real donde está definida la función
-
-
+import { getAlumnosByTutor, getAlumnoById } from '@/api/alumnos.api';
 
 const App = () => {
   return (
     <ThemeProvider>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
-        <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/admin/alumnos" element={<AlumnosPage />} />
-          <Route path="/admin/calendario" element={<CalendarioPage />} />
-          <Route path="/admin/historial" element={<HistorialPage />} />
-        </Route>
+          <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/admin/alumnos" element={<AlumnosPage />} />
+            <Route path="/admin/calendario" element={<CalendarioPage />} />
+            <Route path="/admin/historial" element={<HistorialPage />} />
+          </Route>
 
-        <Route element={<ProtectedRoute allowedRoles={["tutor", "user"]} />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-        </Route>
-      </Routes>
+          <Route element={<ProtectedRoute allowedRoles={["tutor", "user"]} />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
     </ThemeProvider>
   );
 };

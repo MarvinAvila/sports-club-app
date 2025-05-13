@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import DocumentUploader from "@/components/DocumentUploader";
 import MessagingCenter from "@/components/MessagingCenter";
 import ProfileDropdown from "@/components/ProfileDropdown";
+import AlumnoQR from "@/pages/AlumnoQR"; // Asegúrate de tener este componente
 import { useEffect, useState } from "react";
 import {
   getAlumnosByTutor,
-  generarQRPago, // <-- Añade esta importación
+  generarQRPago,
 } from "@/api/alumnos.api";
 
 export default function DashboardPage() {
@@ -15,9 +16,57 @@ export default function DashboardPage() {
   const [alumnos, setAlumnos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedAlumno, setSelectedAlumno] = useState(null);
   const [qrData, setQrData] = useState(null);
   const [loadingQR, setLoadingQR] = useState(false);
+
+  useEffect(() => {
+    if (!user || !user.id) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchTutorData = async () => {
+      try {
+        setLoading(true);
+        const response = await getAlumnosByTutor(user.id);
+        setAlumnos(response.data || response);
+      } catch (err) {
+        if (err.message.includes("Sesión expirada")) {
+          logout();
+          navigate("/login");
+        } else {
+          setError(err.message || "Error al cargar los alumnos");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTutorData();
+  }, [user?.id]);
+
+  const handleGenerarQR = async (alumnoId) => {
+    try {
+      setLoadingQR(true);
+      const response = await generarQRPago(alumnoId);
+      setQrData({
+        alumnoId,
+        qrCode: response.qrCode,
+        paymentUrl: response.paymentUrl,
+        nombre: response.alumno.nombre,
+        apellido: response.alumno.apellido,
+      });
+    } catch (error) {
+      setError(error.message || "Error al generar el código QR");
+    } finally {
+      setLoadingQR(false);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   if (!user) {
     return (
@@ -30,81 +79,6 @@ export default function DashboardPage() {
       </div>
     );
   }
-
-  useEffect(() => {
-    console.log("Datos completos del usuario:", user);
-    console.log("User ID:", user?.id);
-
-    if (!user || !user.id) {
-      console.error("User ID no disponible. User object:", user);
-      setLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    const fetchTutorData = async () => {
-      console.log("Ejecutando fetchTutorData");
-      if (!user?.id) return;
-
-      try {
-        setLoading(true);
-        setError(null);
-        console.log("Fetching alumnos del tutor...");
-        const response = await getAlumnosByTutor(user.id);
-        console.log("Alumnos recibidos:", response);
-
-        // Asegúrate de acceder a la propiedad correcta de la respuesta
-        setAlumnos(response.data || response);
-      } catch (err) {
-        console.error("Error completo:", err);
-
-        // Mostrar mensaje de error más amigable
-        if (err.message.includes("Sesión expirada")) {
-          logout(); // Llama a tu función de logout
-          navigate("/login");
-        } else {
-          setError(err.message || "Error al cargar los alumnos");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTutorData();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user?.id]);
-
-  // Función para generar QR
-const handleGenerarQR = async (alumnoId) => {
-  try {
-    setLoadingQR(true);
-    const response = await generarQRPago(alumnoId);
-    console.log("Respuesta del QR:", response); // Para debug
-    
-    setQrData({
-      alumnoId,
-      qrCode: response.qrCode,
-      paymentUrl: response.paymentUrl,
-      nombre: response.alumno.nombre,
-      apellido: response.alumno.apellido,
-    });
-  } catch (error) {
-    console.error("Error al generar QR:", error);
-    setError(error.message || "Error al generar el código QR");
-    // Opcional: Mostrar notificación al usuario
-  } finally {
-    setLoadingQR(false);
-  }
-};
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
 
   if (loading) {
     return (
@@ -126,10 +100,8 @@ const handleGenerarQR = async (alumnoId) => {
     );
   }
 
-  // Renderizado de cada alumno
   const renderAlumnoCard = (alumno) => (
     <div key={alumno.id} className="bg-gray-700 rounded-xl shadow-lg p-6 mb-6">
-      {/* Encabezado */}
       <div className="flex justify-between items-start mb-4 pb-2 border-b border-gray-600">
         <div>
           <h2 className="text-2xl font-bold text-white">
@@ -159,7 +131,6 @@ const handleGenerarQR = async (alumnoId) => {
         </div>
       </div>
 
-      {/* Mostrar QR si corresponde a este alumno */}
       {qrData?.alumnoId === alumno.id && (
         <div className="mt-4 p-4 bg-gray-800 rounded-lg">
           <AlumnoQR
@@ -171,7 +142,6 @@ const handleGenerarQR = async (alumnoId) => {
         </div>
       )}
 
-      {/* Información detallada en grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
           <h3 className="text-gray-400 font-medium">Información Personal</h3>
@@ -204,11 +174,9 @@ const handleGenerarQR = async (alumnoId) => {
 
   return (
     <div className="flex min-h-screen bg-gray-900 text-gray-100 w-full">
-      {/* Sidebar Fixed para Tutor */}
+      {/* Sidebar */}
       <div className="w-64 bg-gray-800 p-6 flex-shrink-0 border-r border-gray-700 fixed h-full">
-        <h2 className="text-xl font-bold text-blue-400 mb-8">
-          Panel del Tutor
-        </h2>
+        <h2 className="text-xl font-bold text-blue-400 mb-8">Panel del Tutor</h2>
         <nav>
           <ul className="space-y-3">
             <li>
@@ -236,109 +204,28 @@ const handleGenerarQR = async (alumnoId) => {
         </nav>
       </div>
 
-      {/* Contenido principal con margen para el sidebar */}
+      {/* Contenido principal */}
       <div className="ml-64 flex-1 flex flex-col min-w-0">
-        {/* Header */}
         <header className="bg-gray-800 shadow-sm z-10 px-6 py-4 border-b border-gray-700">
           <div className="flex justify-between items-center">
             <h1 className="text-xl font-semibold text-white">
-              Bienvenido,{" "}
-              <span className="text-blue-400">{user?.name || "Tutor"}</span>
+              Bienvenido, <span className="text-blue-400">{user?.name || "Tutor"}</span>
             </h1>
             <div className="flex items-center space-x-4">
-              <ProfileDropdown
-                user={user}
-                role="Tutor"
-                onLogout={handleLogout}
-              />
+              <ProfileDropdown user={user} role="Tutor" onLogout={handleLogout} />
             </div>
           </div>
         </header>
 
-        {/* Contenido */}
         <main className="flex-1 overflow-y-auto p-6 bg-gray-800">
           <div className="max-w-6xl mx-auto">
             {alumnos.length === 0 ? (
-              <div className="bg-gray-700 rounded-xl shadow-lg p-6 mb-6 text-center">
-                <h2 className="text-2xl font-bold text-white mb-4">
-                  No tienes alumnos asociados
-                </h2>
-                <p className="text-gray-300">
-                  Contacta con administración para asociarte a alumnos
-                </p>
+              <div className="text-center text-gray-400">
+                No se encontraron alumnos asociados a tu cuenta.
               </div>
             ) : (
-              <div className="space-y-6">
-                {alumnos.map((alumno) => renderAlumnoCard(alumno))}
-              </div>
+              alumnos.map(renderAlumnoCard)
             )}
-
-            {/* Sección de documentos y mensajes */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              {/* Subir comprobante */}
-              <div className="bg-gray-700 rounded-xl shadow-lg overflow-hidden">
-                <div className="p-6 border-b border-gray-600">
-                  <h3 className="font-semibold text-white text-xl mb-2">
-                    Subir Comprobante de Pago
-                  </h3>
-                  <p className="text-gray-400 text-sm">
-                    Formatos aceptados: PDF, JPG, PNG
-                  </p>
-                </div>
-                <div className="p-6">
-                  <DocumentUploader
-                    purpose="payment"
-                    onUploadSuccess={() =>
-                      alert("Comprobante subido exitosamente")
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* Instrucciones */}
-              <div className="bg-gray-700 rounded-xl shadow-lg overflow-hidden">
-                <div className="p-6 border-b border-gray-600">
-                  <h3 className="font-semibold text-white text-xl">
-                    Instrucciones
-                  </h3>
-                </div>
-                <div className="p-6">
-                  <ul className="space-y-3 text-gray-300">
-                    <li className="flex items-start">
-                      <span className="text-blue-400 mr-2">•</span>
-                      Sube el comprobante de pago en formato PDF o imagen
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-blue-400 mr-2">•</span>
-                      El proceso de validación puede tardar hasta 48 horas
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-blue-400 mr-2">•</span>
-                      Recibirás una notificación por correo cuando sea aprobado
-                    </li>
-                    <li className="flex items-start">
-                      <span className="text-blue-400 mr-2">•</span>
-                      Para dudas, contacta a administración: admin@escuela.com
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-
-            {/* Centro de mensajes */}
-            <div className="bg-gray-700 rounded-xl shadow-lg overflow-hidden">
-              <div className="p-6 border-b border-gray-600">
-                <h3 className="font-semibold text-white text-xl">
-                  Centro de Mensajes
-                </h3>
-                <p className="text-gray-400 text-sm">
-                  Envía tus consultas al administrador
-                </p>
-              </div>
-              <div className="p-6">
-                <MessagingCenter />
-              </div>
-            </div>
           </div>
         </main>
       </div>
