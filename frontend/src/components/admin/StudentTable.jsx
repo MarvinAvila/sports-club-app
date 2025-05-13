@@ -61,7 +61,6 @@ const StudentTable = ({ onEdit, onDelete }) => {
     const dataToExport = filteredAlumnos.length > 0 ? filteredAlumnos : alumnos;
     
     const formattedData = dataToExport.map(alumno => ({
-      'ID': alumno.id,
       'Nombre Completo': `${alumno.nombre} ${alumno.apellido_paterno} ${alumno.apellido_materno || ''}`.trim(),
       'CURP': alumno.curp || 'N/A',
       'Teléfono': alumno.telefonos_contacto || 'N/A',
